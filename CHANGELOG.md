@@ -10,6 +10,7 @@ All notable, unreleased changes to this project will be documented in this file.
 - Replaced `context.app` lazy object with a dataloader.
 - Add support for bcrypt password hashes - #10346 by @pkucmus
 - Add ability to set taxes configuration per channel in the Avatax plugin - #10445 by @mociepka
+- Reference attribute linking to product variants - #10468 by @IKarbowiak
 
 ### GraphQL API
  - Add `name` parameter to `ProductVariantInput` - #10456 by @SzymJ
