@@ -31,12 +31,14 @@ from ...account.search import (
 from ...account.utils import store_user_address
 from ...attribute.models import (
     AssignedPageAttribute,
+    AssignedPostAttribute,
     AssignedProductAttribute,
     AssignedProductAttributeValue,
     AssignedVariantAttribute,
     AssignedVariantAttributeValue,
     Attribute,
     AttributePage,
+    AttributePost,
     AttributeProduct,
     AttributeValue,
     AttributeVariant,
@@ -68,6 +70,7 @@ from ...page.models import Page, PageType
 from ...payment import gateway
 from ...payment.utils import create_payment
 from ...plugins.manager import get_plugins_manager
+from ...post.models import Post, PostType
 from ...product.models import (
     Category,
     Collection,
@@ -360,6 +363,18 @@ def assign_attributes_to_page_types(
         association_model.objects.update_or_create(pk=pk, defaults=defaults)
 
 
+def assign_attributes_to_post_types(
+    association_model: AttributePost,
+    attributes: list,
+):
+    for value in attributes:
+        pk = value["pk"]
+        defaults = dict(value["fields"])
+        defaults["attribute_id"] = defaults.pop("attribute")
+        defaults["post_type_id"] = defaults.pop("post_type")
+        association_model.objects.update_or_create(pk=pk, defaults=defaults)
+
+
 def assign_attributes_to_products(product_attributes):
     for value in product_attributes:
         pk = value["pk"]
@@ -410,6 +425,20 @@ def assign_attributes_to_pages(page_attributes):
             assoc.values.set(AttributeValue.objects.filter(pk__in=assigned_values))
 
 
+def assign_attributes_to_posts(post_attributes):
+    for value in post_attributes:
+        pk = value["pk"]
+        defaults = dict(value["fields"])
+        defaults["post_id"] = defaults.pop("post")
+        defaults["assignment_id"] = defaults.pop("assignment")
+        assigned_values = defaults.pop("values")
+        assoc, created = AssignedPostAttribute.objects.update_or_create(
+            pk=pk, defaults=defaults
+        )
+        if created:
+            assoc.values.set(AttributeValue.objects.filter(pk__in=assigned_values))
+
+
 def set_field_as_money(defaults, field):
     amount_field = f"{field}_amount"
     if amount_field in defaults and defaults[amount_field] is not None:
@@ -450,6 +479,9 @@ def create_products_by_schema(placeholder_dir, create_images):
     )
     assign_attributes_to_page_types(
         AttributePage, attributes=types["attribute.attributepage"]
+    )
+    assign_attributes_to_post_types(
+        AttributePost, attributes=types["attribute.attributepost"]
     )
     assign_attributes_to_products(
         product_attributes=types["attribute.assignedproductattribute"]
@@ -1512,6 +1544,18 @@ def create_page_type():
         yield "Page type %s created" % page_type.slug
 
 
+def create_post_type():
+    types = get_sample_data()
+
+    data = types["post.posttype"]
+
+    for post_type_data in data:
+        pk = post_type_data.pop("pk")
+        defaults = dict(post_type_data["fields"])
+        post_type, _ = PostType.objects.update_or_create(pk=pk, defaults=defaults)
+        yield "Post type %s created" % post_type.slug
+
+
 def create_pages():
     types = get_sample_data()
 
@@ -1523,6 +1567,19 @@ def create_pages():
         defaults["page_type_id"] = defaults.pop("page_type")
         page, _ = Page.objects.update_or_create(pk=pk, defaults=defaults)
         yield "Page %s created" % page.slug
+
+
+def create_posts():
+    types = get_sample_data()
+
+    data_pages = types["post.post"]
+
+    for post_data in data_pages:
+        pk = post_data["pk"]
+        defaults = dict(post_data["fields"])
+        defaults["post_type_id"] = defaults.pop("post_type")
+        post, _ = Post.objects.update_or_create(pk=pk, defaults=defaults)
+        yield "Post %s created" % post.slug
 
 
 def create_menus():

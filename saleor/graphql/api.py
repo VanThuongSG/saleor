@@ -19,6 +19,7 @@ from .meta.schema import MetaMutations
 from .order.schema import OrderMutations, OrderQueries
 from .page.schema import PageMutations, PageQueries
 from .payment.schema import PaymentMutations, PaymentQueries
+from .post.schema import PostMutations, PostQueries
 from .plugins.schema import PluginsMutations, PluginsQueries
 from .product.schema import ProductMutations, ProductQueries
 from .shipping.schema import ShippingMutations, ShippingQueries
@@ -46,6 +47,7 @@ class Query(
     OrderQueries,
     PageQueries,
     PaymentQueries,
+    PostQueries,
     ProductQueries,
     ShippingQueries,
     ShopQueries,
@@ -75,6 +77,7 @@ class Mutation(
     OrderMutations,
     PageMutations,
     PaymentMutations,
+    PostMutations,
     ProductMutations,
     ShippingMutations,
     ShopMutations,

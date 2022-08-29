@@ -9,6 +9,8 @@ from ..core.exceptions import PermissionDenied
 from ..core.permissions import (
     PagePermissions,
     PageTypePermissions,
+    PostPermissions,
+    PostTypePermissions,
     ProductPermissions,
     ProductTypePermissions,
     has_one_of_permissions,
@@ -122,6 +124,11 @@ def check_attribute_required_permissions():
             permissions = (
                 PagePermissions.MANAGE_PAGES,
                 PageTypePermissions.MANAGE_PAGE_TYPES_AND_ATTRIBUTES,
+            )
+        elif attribute.type == AttributeType.POST_TYPE:
+            permissions = (
+                PostPermissions.MANAGE_POSTS,
+                PostTypePermissions.MANAGE_POST_TYPES_AND_ATTRIBUTES,
             )
         else:
             permissions = (

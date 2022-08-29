@@ -29,6 +29,7 @@ from ..enums import (
     PaymentErrorCode,
     PermissionEnum,
     PermissionGroupErrorCode,
+    PostErrorCode,
     PluginErrorCode,
     ProductErrorCode,
     ShippingErrorCode,
@@ -323,6 +324,20 @@ class ShippingError(Error):
 
 class PageError(Error):
     code = PageErrorCode(description="The error code.", required=True)
+    attributes = NonNullList(
+        graphene.ID,
+        description="List of attributes IDs which causes the error.",
+        required=False,
+    )
+    values = NonNullList(
+        graphene.ID,
+        description="List of attribute values IDs which causes the error.",
+        required=False,
+    )
+
+
+class PostError(Error):
+    code = PostErrorCode(description="The error code.", required=True)
     attributes = NonNullList(
         graphene.ID,
         description="List of attributes IDs which causes the error.",

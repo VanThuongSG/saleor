@@ -24,6 +24,7 @@ from ...menu import error_codes as menu_error_codes
 from ...order import error_codes as order_error_codes
 from ...page import error_codes as page_error_codes
 from ...payment import error_codes as payment_error_codes
+from ...post import error_codes as post_error_codes
 from ...plugins import error_codes as plugin_error_codes
 from ...product import error_codes as product_error_codes
 from ...shipping import error_codes as shipping_error_codes
@@ -126,6 +127,7 @@ OrderErrorCode = graphene.Enum.from_enum(order_error_codes.OrderErrorCode)
 InvoiceErrorCode = graphene.Enum.from_enum(invoice_error_codes.InvoiceErrorCode)
 PageErrorCode = graphene.Enum.from_enum(page_error_codes.PageErrorCode)
 PaymentErrorCode = graphene.Enum.from_enum(payment_error_codes.PaymentErrorCode)
+PostErrorCode = graphene.Enum.from_enum(post_error_codes.PostErrorCode)
 
 TransactionCreateErrorCode = graphene.Enum.from_enum(
     payment_error_codes.TransactionCreateErrorCode

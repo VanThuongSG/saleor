@@ -473,6 +473,15 @@ type Query {
     slug: String
   ): Page
 
+  """Look up a page by ID or slug."""
+  post(
+    """ID of the page."""
+    id: ID
+
+    """The slug of the page."""
+    slug: String
+  ): Post
+
   """List of the shop's pages."""
   pages(
     """Sort pages."""
@@ -493,6 +502,27 @@ type Query {
     """Return the last n elements from the list."""
     last: Int
   ): PageCountableConnection
+
+  """List of the shop's posts."""
+  posts(
+    """Sort pages."""
+    sortBy: PostSortingInput
+
+    """Filtering options for posts."""
+    filter: PostFilterInput
+
+    """Return the elements in the list that come before the specified cursor."""
+    before: String
+
+    """Return the elements in the list that come after the specified cursor."""
+    after: String
+
+    """Return the first n elements from the list."""
+    first: Int
+
+    """Return the last n elements from the list."""
+    last: Int
+  ): PostCountableConnection
 
   """Look up a page type by ID."""
   pageType(
@@ -520,6 +550,34 @@ type Query {
     """Return the last n elements from the list."""
     last: Int
   ): PageTypeCountableConnection
+
+
+  """Look up a page type by ID."""
+  postType(
+    """ID of the page type."""
+    id: ID!
+  ): PostType
+
+  """List of the post types."""
+  postTypes(
+    """Sort post types."""
+    sortBy: PostTypeSortingInput
+
+    """Filtering options for page types."""
+    filter: PostTypeFilterInput
+
+    """Return the elements in the list that come before the specified cursor."""
+    before: String
+
+    """Return the elements in the list that come after the specified cursor."""
+    after: String
+
+    """Return the first n elements from the list."""
+    first: Int
+
+    """Return the last n elements from the list."""
+    last: Int
+  ): PostTypeCountableConnection
 
   """
   List of activity events to display on homepage (at the moment it only contains order-events).

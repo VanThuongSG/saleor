@@ -35,6 +35,7 @@ from .common import (
     PaymentError,
     Permission,
     PermissionGroupError,
+    PostError,
     PluginError,
     PriceInput,
     PriceRangeInput,

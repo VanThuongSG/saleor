@@ -63,6 +63,14 @@ class PageTypePermissions(BasePermissionEnum):
     MANAGE_PAGE_TYPES_AND_ATTRIBUTES = "page.manage_page_types_and_attributes"
 
 
+class PostPermissions(BasePermissionEnum):
+    MANAGE_POSTS = "post.manage_posts"
+
+
+class PostTypePermissions(BasePermissionEnum):
+    MANAGE_POST_TYPES_AND_ATTRIBUTES = "post.manage_post_types_and_attributes"
+
+
 class ProductPermissions(BasePermissionEnum):
     MANAGE_PRODUCTS = "product.manage_products"
 

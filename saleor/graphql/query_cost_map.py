@@ -97,6 +97,10 @@ COST_MAP = {
         "pageTypes": {"complexity": 1, "multipliers": ["first", "last"]},
         "payment": {"complexity": 1},
         "payments": {"complexity": 1, "multipliers": ["first", "last"]},
+        "post": {"complexity": 1},
+        "posts": {"complexity": 1, "multipliers": ["first", "last"]},
+        "postType": {"complexity": 1},
+        "postTypes": {"complexity": 1, "multipliers": ["first", "last"]},
         "permissionGroup": {"complexity": 1},
         "permissionGroups": {"complexity": 1, "multipliers": ["first", "last"]},
         "plugin": {"complexity": 1},
@@ -225,6 +229,14 @@ COST_MAP = {
         "pageType": {"complexity": 1},
     },
     "PageType": {
+        "attributes": {"complexity": 1},
+        "availableAttributes": {"complexity": 1, "multipliers": ["first", "last"]},
+    },
+    "Post": {
+        "attributes": {"complexity": 1},
+        "postType": {"complexity": 1},
+    },
+    "PostType": {
         "attributes": {"complexity": 1},
         "availableAttributes": {"complexity": 1, "multipliers": ["first", "last"]},
     },

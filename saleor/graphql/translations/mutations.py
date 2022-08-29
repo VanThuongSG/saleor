@@ -10,6 +10,7 @@ from ...core.tracing import traced_atomic_transaction
 from ...discount import models as discount_models
 from ...menu import models as menu_models
 from ...page import models as page_models
+from ...post import models as post_models
 from ...product import models as product_models
 from ...shipping import models as shipping_models
 from ...site.models import SiteSettings
@@ -49,6 +50,7 @@ TRANSLATABLE_CONTENT_TO_MODEL = {
     ): product_models.ProductVariant._meta.object_name,
     # Page Translation mutation reverses model and TranslatableContent
     page_models.Page._meta.object_name: str(translation_types.PageTranslatableContent),
+    post_models.Post._meta.object_name: str(translation_types.PostTranslatableContent),
     str(
         translation_types.ShippingMethodTranslatableContent
     ): shipping_models.ShippingMethod._meta.object_name,
@@ -458,6 +460,31 @@ class PageTranslate(BaseTranslateMutation):
         model = page_models.Page
         # Note: `PageTranslate` is only mutation that returns "TranslatableContent"
         object_type = translation_types.PageTranslatableContent
+        error_type_class = TranslationError
+        error_type_field = "translation_errors"
+        permissions = (SitePermissions.MANAGE_TRANSLATIONS,)
+
+
+class PostTranslationInput(SeoTranslationInput):
+    title = graphene.String()
+    content = JSONString(description="Translated page content." + RICH_CONTENT)
+
+
+class PostTranslate(BaseTranslateMutation):
+    class Arguments:
+        id = graphene.ID(
+            required=True, description="Post ID or PostTranslatableContent ID."
+        )
+        language_code = graphene.Argument(
+            LanguageCodeEnum, required=True, description="Translation language code."
+        )
+        input = PostTranslationInput(required=True)
+
+    class Meta:
+        description = "Creates/updates translations for a post."
+        model = post_models.Post
+        # Note: `PostTranslate` is only mutation that returns "TranslatableContent"
+        object_type = translation_types.PostTranslatableContent
         error_type_class = TranslationError
         error_type_field = "translation_errors"
         permissions = (SitePermissions.MANAGE_TRANSLATIONS,)

@@ -11,6 +11,7 @@ from ...core.tracing import traced_resolver
 from ...discount import models as discount_models
 from ...menu import models as menu_models
 from ...page import models as page_models
+from ...post import models as post_models
 from ...product import models as product_models
 from ...shipping import models as shipping_models
 from ...site import models as site_models
@@ -21,6 +22,7 @@ from ..core.fields import JSONString, PermissionsField
 from ..core.types import LanguageDisplay, ModelObjectType, NonNullList
 from ..core.utils import str_to_enum
 from ..page.dataloaders import SelectedAttributesByPageIdLoader
+from ..post.dataloaders import SelectedAttributesByPostIdLoader
 from ..product.dataloaders import (
     SelectedAttributesByProductIdLoader,
     SelectedAttributesByProductVariantIdLoader,
@@ -397,6 +399,27 @@ class PageTranslation(BaseTranslationType):
         return content if content is not None else {}
 
 
+class PostTranslation(BaseTranslationType):
+    id = graphene.GlobalID(required=True)
+    seo_title = graphene.String()
+    seo_description = graphene.String()
+    title = graphene.String()
+    content = JSONString(description="Translated content of the post." + RICH_CONTENT)
+    content_json = JSONString(
+        description="Translated description of the post." + RICH_CONTENT,
+        deprecation_reason=f"{DEPRECATED_IN_3X_FIELD} Use the `content` field instead.",
+    )
+
+    class Meta:
+        model = post_models.PostTranslation
+        interfaces = [graphene.relay.Node]
+
+    @staticmethod
+    def resolve_content_json(root: post_models.PostTranslation, _info):
+        content = root.content
+        return content if content is not None else {}
+
+
 class PageTranslatableContent(ModelObjectType):
     id = graphene.GlobalID(required=True)
     seo_title = graphene.String()
@@ -448,6 +471,60 @@ class PageTranslatableContent(ModelObjectType):
             .load(root.id)
             .then(get_translatable_attribute_values)
         )
+
+
+class PostTranslatableContent(ModelObjectType):
+    id = graphene.GlobalID(required=True)
+    seo_title = graphene.String()
+    seo_description = graphene.String()
+    title = graphene.String(required=True)
+    content = JSONString(description="Content of the post." + RICH_CONTENT)
+    content_json = JSONString(
+        description="Content of the page." + RICH_CONTENT,
+        deprecation_reason=f"{DEPRECATED_IN_3X_FIELD} Use the `content` field instead.",
+    )
+    translation = TranslationField(PostTranslation, type_name="page")
+    post = graphene.Field(
+        "saleor.graphql.post.types.Post",
+        description=(
+            "A static page that can be manually added by a shop operator "
+            "through the dashboard."
+        ),
+        deprecation_reason=(
+            f"{DEPRECATED_IN_3X_FIELD} Get model fields from the root level queries."
+        ),
+    )
+    attribute_values = NonNullList(
+        AttributeValueTranslatableContent,
+        required=True,
+        description="List of page content attribute values that can be translated.",
+    )
+
+    class Meta:
+        model = post_models.Post
+        interfaces = [graphene.relay.Node]
+
+    @staticmethod
+    def resolve_post(root: post_models.Post, info):
+        return (
+            post_models.Post.objects.visible_to_user(info.context.user)
+            .filter(pk=root.id)
+            .first()
+        )
+
+    @staticmethod
+    def resolve_content_json(root: post_models.Post, _info):
+        content = root.content
+        return content if content is not None else {}
+
+    @staticmethod
+    def resolve_attribute_values(root: post_models.Post, info):
+        return (
+            SelectedAttributesByPostIdLoader(info.context)
+            .load(root.id)
+            .then(get_translatable_attribute_values)
+        )
+
 
 
 class VoucherTranslation(BaseTranslationType):

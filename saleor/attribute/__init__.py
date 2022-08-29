@@ -95,8 +95,9 @@ ATTRIBUTE_PROPERTIES_CONFIGURATION = {
 class AttributeType:
     PRODUCT_TYPE = "product-type"
     PAGE_TYPE = "page-type"
+    POST_TYPE = "post-type"
 
-    CHOICES = [(PRODUCT_TYPE, "Product type"), (PAGE_TYPE, "Page type")]
+    CHOICES = [(PRODUCT_TYPE, "Product type"), (PAGE_TYPE, "Page type"), (POST_TYPE, "Post type")]
 
 
 class AttributeEntityType:
@@ -109,5 +110,6 @@ class AttributeEntityType:
 
     PAGE = "Page"
     PRODUCT = "Product"
+    POST = "Post"
 
-    CHOICES = [(PAGE, "Page"), (PRODUCT, "Product")]
+    CHOICES = [(PAGE, "Page"), (PRODUCT, "Product"), (POST, "Post")]

@@ -19,6 +19,8 @@ from ...utils.random_data import (
     create_page_type,
     create_pages,
     create_permission_groups,
+    create_post_type,
+    create_posts,
     create_product_sales,
     create_products_by_schema,
     create_shipping_zones,
@@ -96,6 +98,10 @@ class Command(BaseCommand):
         for msg in create_page_type():
             self.stdout.write(msg)
         for msg in create_pages():
+            self.stdout.write(msg)
+        for msg in create_post_type():
+            self.stdout.write(msg)
+        for msg in create_posts():
             self.stdout.write(msg)
         create_products_by_schema(self.placeholders_dir, create_images)
         self.stdout.write("Created products")

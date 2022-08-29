@@ -8,6 +8,7 @@ from ...core.db.fields import SanitizedJSONField
 from ...core.models import ModelWithMetadata, SortableModel
 from ...core.permissions import (
     PageTypePermissions,
+    PostTypePermissions,
     ProductTypePermissions,
     has_one_of_permissions,
 )
@@ -15,6 +16,7 @@ from ...core.units import MeasurementUnits
 from ...core.utils.editorjs import clean_editor_js
 from ...core.utils.translations import Translation, TranslationProxy
 from ...page.models import Page, PageType
+from ...post.models import Post, PostType
 from ...product.models import Product, ProductType
 from .. import AttributeEntityType, AttributeInputType, AttributeType
 
@@ -49,6 +51,7 @@ class BaseAttributeQuerySet(models.QuerySet):
             requestor,
             [
                 PageTypePermissions.MANAGE_PAGE_TYPES_AND_ATTRIBUTES,
+                PostTypePermissions.MANAGE_POST_TYPES_AND_ATTRIBUTES,
                 ProductTypePermissions.MANAGE_PRODUCT_TYPES_AND_ATTRIBUTES,
             ],
         ):
@@ -71,6 +74,11 @@ class AttributeQuerySet(BaseAttributeQuerySet):
     def get_unassigned_page_type_attributes(self, page_type_pk: int):
         return self.page_type_attributes().exclude(
             attributepage__page_type_id=page_type_pk
+        )
+
+    def get_unassigned_post_type_attributes(self, post_type_pk: int):
+        return self.post_type_attributes().exclude(
+            attributepost__post_type_id=post_type_pk
         )
 
     def get_assigned_product_type_attributes(self, product_type_pk: int):
@@ -110,6 +118,9 @@ class AttributeQuerySet(BaseAttributeQuerySet):
 
     def page_type_attributes(self):
         return self.filter(type=AttributeType.PAGE_TYPE)
+    
+    def post_type_attributes(self):
+        return self.filter(type=AttributeType.POST_TYPE)
 
 
 class Attribute(ModelWithMetadata):
@@ -146,6 +157,13 @@ class Attribute(ModelWithMetadata):
         related_name="page_attributes",
         through="AttributePage",
         through_fields=("attribute", "page_type"),
+    )
+    post_types = models.ManyToManyField(
+        PostType,
+        blank=True,
+        related_name="post_attributes",
+        through="AttributePost",
+        through_fields=("attribute", "post_type"),
     )
 
     unit = models.CharField(
@@ -235,6 +253,10 @@ class AttributeValue(SortableModel):
         Page, related_name="references", on_delete=models.CASCADE, null=True, blank=True
     )
 
+    reference_post = models.ForeignKey(
+        Post, related_name="references", on_delete=models.CASCADE, null=True, blank=True
+    )
+
     translated = TranslationProxy()
 
     class Meta:
@@ -320,4 +342,12 @@ class AttributeValueTranslation(Translation):
                         context["page_id"] = page.id
                         if page_type_id := page.page_type_id:
                             context["page_type_id"] = page_type_id
+            elif attribute.type == AttributeType.POST_TYPE:
+                if assigned_post_attribute_value := (
+                    attribute_value.postvalueassignment.first()
+                ):
+                    if post := assigned_post_attribute_value.assignment.post:
+                        context["post_id"] = post.id
+                        if post_type_id := post.post_type_id:
+                            context["post_type_id"] = post_type_id
         return context
