@@ -3,7 +3,7 @@ name: Publish
 on:
   push:
     branches:
-      - refactor-for-cms
+      - master
 
 jobs:
   docker:

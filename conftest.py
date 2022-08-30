@@ -9,6 +9,19 @@ from django.db import connections
 from django.test.testcases import TransactionTestCase
 
 pytest_plugins = [
+    "cms.tests.fixtures",
+    "cms.plugins.tests.fixtures",
+    "cms.graphql.tests.fixtures",
+    "cms.graphql.channel.tests.fixtures",
+    "cms.graphql.channel.tests.benchmark.fixtures",
+    "cms.graphql.account.tests.benchmark.fixtures",
+    "cms.graphql.order.tests.benchmark.fixtures",
+    "cms.graphql.giftcard.tests.benchmark.fixtures",
+    "cms.graphql.webhook.tests.benchmark.fixtures",
+    "cms.plugins.webhook.tests.subscription_webhooks.fixtures",
+]
+
+pytest_plugins_saleor = [
     "saleor.tests.fixtures",
     "saleor.plugins.tests.fixtures",
     "saleor.graphql.tests.fixtures",
