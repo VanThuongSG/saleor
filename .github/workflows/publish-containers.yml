@@ -2,12 +2,8 @@ name: Publish
 
 on:
   push:
-    tags:
-      # Matches stable and pre-releases
-      - "[0-9]+.[0-9]+.[0-9]+*"
     branches:
-      - main
-      - ci/**
+      - refactor-for-cms
 
 jobs:
   docker:
@@ -132,17 +128,3 @@ jobs:
             Digest: ${{ steps.docker_build.outputs.digest }}
             Tags: ${{ env.CONTAINER_TAGS }}"
 
-      - name: Trigger staging deployments for tagged release
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          curl -f -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: Bearer ${{ secrets.SALEOR_RELEASE_TOKEN }}" \
-            https://api.github.com/repos/saleor/saleor-multitenant/dispatches \
-            -d "{\"event_type\":\"deploy-staging\",\"client_payload\":{\"version\":\"$VERSION\"}}"
-
-          curl -f -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: Bearer ${{ secrets.SALEOR_RELEASE_TOKEN }}" \
-            https://api.github.com/repos/saleor/saleor-cloud-deployments/dispatches \
-            -d "{\"event_type\":\"deploy-demo-staging\",\"client_payload\":{\"version\":\"$VERSION\"}}"
