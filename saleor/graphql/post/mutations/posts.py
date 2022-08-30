@@ -112,6 +112,9 @@ class PostCreate(ModelMutation):
                 external_description = tag.attrs['content']
             if 'name' in tag.attrs.keys() and tag.attrs['name'].strip().lower() in ['title']:
                 external_title = tag.attrs['content']
+            if 'property' in tag.attrs.keys() and tag.attrs['property'].strip().lower() in ['og:image']:
+                print(tag.attrs['content'])
+                cleaned_input["featured_image"] = tag.attrs['content']
         
         # Populate external data if available
         if external_description:
@@ -177,9 +180,6 @@ class PostCreate(ModelMutation):
                 raise ValidationError({"attributes": exc})
 
         clean_seo_fields(cleaned_input)
-
-        print(cleaned_input)
-
         return cleaned_input
 
     @classmethod
@@ -194,6 +194,18 @@ class PostCreate(ModelMutation):
     @classmethod
     def save(cls, info, instance, cleaned_input):
         super().save(info, instance, cleaned_input)
+        media_url = cleaned_input.get("featured_image")
+        if media_url:
+            if is_image_url(media_url):
+                validate_image_url(media_url, "media_url", PostErrorCode.INVALID)
+                filename = get_filename_from_url(media_url)
+                image_data = requests.get(media_url, stream=True)
+                image_file = File(image_data.raw, filename)                
+                instance.media.create(
+                    image=image_file,
+                    alt="Default image alt",
+                    type=PostMediaTypes.IMAGE,
+                )
         info.context.plugins.post_created(instance)
 
 
