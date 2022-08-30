@@ -50,6 +50,7 @@ if TYPE_CHECKING:
     from ..menu.models import Menu, MenuItem
     from ..order.models import Fulfillment, Order, OrderLine
     from ..page.models import Page, PageType
+    from ..post.models import Post, PostType
     from ..payment.interface import (
         CustomerSource,
         GatewayResponse,
@@ -846,6 +847,36 @@ class PluginsManager(PaymentInterface):
         default_value = None
         return self.__run_method_on_plugins(
             "page_type_deleted", default_value, page_type
+        )
+
+    def post_created(self, post: "Post"):
+        default_value = None
+        return self.__run_method_on_plugins("post_created", default_value, post)
+
+    def post_updated(self, post: "Post"):
+        default_value = None
+        return self.__run_method_on_plugins("post_updated", default_value, post)
+
+    def postdeleted(self, post: "Post"):
+        default_value = None
+        return self.__run_method_on_plugins("post_deleted", default_value, post)
+
+    def post_type_created(self, post_type: "PostType"):
+        default_value = None
+        return self.__run_method_on_plugins(
+            "post_type_created", default_value, post_type
+        )
+
+    def post_type_updated(self, post_type: "PostType"):
+        default_value = None
+        return self.__run_method_on_plugins(
+            "post_type_updated", default_value, post_type
+        )
+
+    def post_type_deleted(self, post_type: "PostType"):
+        default_value = None
+        return self.__run_method_on_plugins(
+            "post_type_deleted", default_value, post_type
         )
 
     def permission_group_created(self, group: "Group"):

@@ -1,3 +1,5 @@
+import requests
+from bs4 import BeautifulSoup
 from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Dict, List
@@ -5,23 +7,36 @@ from typing import TYPE_CHECKING, Dict, List
 import graphene
 import pytz
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from django.db import transaction
 
 from ....attribute import AttributeInputType, AttributeType
 from ....attribute import models as attribute_models
 from ....core.permissions import PostPermissions, PostTypePermissions
+from ....core.tasks import delete_post_media_task
 from ....core.tracing import traced_atomic_transaction
-from ....post import models
+from ....core.utils.validators import get_oembed_data
+from ....post import PostMediaTypes, models
 from ....post.error_codes import PostErrorCode
 from ...attribute.types import AttributeValueInput
 from ...attribute.utils import AttributeAssignmentMixin
 from ...core.descriptions import ADDED_IN_33, DEPRECATED_IN_3X_INPUT, RICH_CONTENT
 from ...core.fields import JSONString
-from ...core.mutations import ModelDeleteMutation, ModelMutation
-from ...core.types import NonNullList, PostError, SeoInput
-from ...core.utils import clean_seo_fields, validate_slug_and_generate_if_needed
+from ...core.mutations import ModelDeleteMutation, ModelMutation, BaseMutation
+from ...core.types import NonNullList, PostError, SeoInput, Upload
+from ...core.utils import (
+    add_hash_to_file_name,
+    clean_seo_fields,
+    get_filename_from_url,
+    validate_slug_and_generate_if_needed,
+    is_image_url,
+    validate_image_file,
+    validate_image_url,
+)
 from ...utils.validators import check_for_duplicates
-from ..types import Post, PostType
+from ..types import Post, PostType, PostMedia
+from ..utils import update_ordered_media
+
 
 if TYPE_CHECKING:
     from ....attribute.models import Attribute
@@ -45,6 +60,7 @@ class PostInput(graphene.InputObjectType):
         description="Publication date time. ISO 8601 standard." + ADDED_IN_33
     )
     seo = SeoInput(description="Search engine optimization fields.")
+    external_url = graphene.String(description="Th original post url.")
 
 
 class PostCreateInput(PostInput):
@@ -78,6 +94,48 @@ class PostCreate(ModelMutation):
     @classmethod
     def clean_input(cls, info, instance, data):
         cleaned_input = super().clean_input(info, instance, data)
+        external_url = cleaned_input.get("external_url")
+
+        r = requests.get(external_url)
+        soup = BeautifulSoup(r.text)
+        meta = soup.findAll('meta')
+
+        external_description = ""
+        external_title = ""
+        seo_data = {
+            "title": "",
+            "description": ""
+        }
+
+        for tag in meta:            
+            if 'name' in tag.attrs.keys() and tag.attrs['name'].strip().lower() in ['description']:
+                external_description = tag.attrs['content']
+            if 'name' in tag.attrs.keys() and tag.attrs['name'].strip().lower() in ['title']:
+                external_title = tag.attrs['content']
+        
+        # Populate external data if available
+        if external_description:
+            description_editorjs = {
+                # "time": 1607174917790,
+                "blocks": [
+                {
+                    "data": {
+                        "text": external_description
+                    },
+                    "type": "paragraph"
+                }
+                ],
+                "version": "2.22.2"
+            }
+            cleaned_input["content"] = description_editorjs
+            seo_data["description"] = external_description
+
+        if external_title:
+            cleaned_input["title"] = external_title
+            seo_data["title"] = external_title
+        
+        cleaned_input["seo"] = seo_data
+
         try:
             cleaned_input = validate_slug_and_generate_if_needed(
                 instance, "title", cleaned_input
@@ -119,6 +177,8 @@ class PostCreate(ModelMutation):
                 raise ValidationError({"attributes": exc})
 
         clean_seo_fields(cleaned_input)
+
+        print(cleaned_input)
 
         return cleaned_input
 
@@ -377,3 +437,249 @@ class PostTypeDelete(ModelDeleteMutation):
     @classmethod
     def post_save_action(cls, info, instance, cleaned_input):
         transaction.on_commit(lambda: info.context.plugins.post_type_deleted(instance))
+
+
+class PostMediaCreateInput(graphene.InputObjectType):
+    alt = graphene.String(description="Alt text for a post media.")
+    image = Upload(
+        required=False, description="Represents an image file in a multipart request."
+    )
+    post = graphene.ID(
+        required=True, description="ID of an post.", name="post"
+    )
+    media_url = graphene.String(
+        required=False, description="Represents an URL to an external media."
+    )
+
+
+class PostMediaCreate(BaseMutation):
+    post = graphene.Field(Post)
+    media = graphene.Field(PostMedia)
+
+    class Arguments:
+        input = PostMediaCreateInput(
+            required=True, description="Fields required to create a post media."
+        )
+
+    class Meta:
+        description = (
+            "Create a media object (image or video URL) associated with post. "
+            "For image, this mutation must be sent as a `multipart` request. "
+            "More detailed specs of the upload format can be found here: "
+            "https://github.com/jaydenseric/graphql-multipart-request-spec"
+        )
+        permissions = (PostPermissions.MANAGE_POSTS,)
+        error_type_class = PostError
+        error_type_field = "post_errors"
+
+    @classmethod
+    def validate_input(cls, data):
+        image = data.get("image")
+        media_url = data.get("media_url")
+
+        if not image and not media_url:
+            raise ValidationError(
+                {
+                    "input": ValidationError(
+                        "Image or external URL is required.",
+                        code=PostErrorCode.REQUIRED,
+                    )
+                }
+            )
+        if image and media_url:
+            raise ValidationError(
+                {
+                    "input": ValidationError(
+                        "Either image or external URL is required.",
+                        code=PostErrorCode.DUPLICATED_INPUT_ITEM,
+                    )
+                }
+            )
+
+    @classmethod
+    def perform_mutation(cls, _root, info, **data):
+        data = data.get("input")
+        cls.validate_input(data)
+        post = cls.get_node_or_error(
+            info,
+            data["post"],
+            field="post",
+            only_type=Post,
+            qs=models.Post.objects.prefetched_for_webhook(),
+        )
+
+        alt = data.get("alt", "")
+        image = data.get("image")
+        media_url = data.get("media_url")
+        if image:
+            image_data = info.context.FILES.get(image)
+            validate_image_file(image_data, "image", PostErrorCode)
+            add_hash_to_file_name(image_data)
+            media = post.media.create(
+                image=image_data, alt=alt, type=PostMediaTypes.IMAGE
+            )
+        if media_url:
+            # Remote URLs can point to the images or oembed data.
+            # In case of images, file is downloaded. Otherwise we keep only
+            # URL to remote media.
+            if is_image_url(media_url):
+                validate_image_url(media_url, "media_url", PostErrorCode.INVALID)
+                filename = get_filename_from_url(media_url)
+                image_data = requests.get(media_url, stream=True)
+                image_file = File(image_data.raw, filename)
+                media = post.media.create(
+                    image=image_file,
+                    alt=alt,
+                    type=PostMediaTypes.IMAGE,
+                )
+            else:
+                oembed_data, media_type = get_oembed_data(media_url, "media_url")
+                media = post.media.create(
+                    external_url=oembed_data["url"],
+                    alt=oembed_data.get("title", alt),
+                    type=media_type,
+                    oembed_data=oembed_data,
+                )
+
+        info.context.plugins.post_updated(post)
+        # post = ChannelContext(node=post, channel_slug=None)
+        return PostMediaCreate(post=post, media=media)
+
+
+class PostMediaUpdateInput(graphene.InputObjectType):
+    alt = graphene.String(description="Alt text for a post media.")
+
+
+class PostMediaUpdate(BaseMutation):
+    post = graphene.Field(Post)
+    media = graphene.Field(PostMedia)
+
+    class Arguments:
+        id = graphene.ID(required=True, description="ID of a post media to update.")
+        input = PostMediaUpdateInput(
+            required=True, description="Fields required to update a post media."
+        )
+
+    class Meta:
+        description = "Updates a post media."
+        permissions = (PostPermissions.MANAGE_POSTS,)
+        error_type_class = PostError
+        error_type_field = "post_errors"
+
+    @classmethod
+    def perform_mutation(cls, _root, info, **data):
+        media = cls.get_node_or_error(info, data.get("id"), only_type=PostMedia)
+        post = models.Post.objects.prefetched_for_webhook().get(
+            pk=media.post_id
+        )
+        alt = data.get("input").get("alt")
+        if alt is not None:
+            media.alt = alt
+            media.save(update_fields=["alt"])
+        info.context.plugins.post_updated(post)
+        # post = ChannelContext(node=post, channel_slug=None)
+        return PostMediaUpdate(post=post, media=media)
+
+
+class PostMediaReorder(BaseMutation):
+    post = graphene.Field(Post)
+    media = NonNullList(PostMedia)
+
+    class Arguments:
+        post_id = graphene.ID(
+            required=True,
+            description="ID of post that media order will be altered.",
+        )
+        media_ids = NonNullList(
+            graphene.ID,
+            required=True,
+            description="IDs of a post media in the desired order.",
+        )
+
+    class Meta:
+        description = "Changes ordering of the post media."
+        permissions = (PostPermissions.MANAGE_POSTS,)
+        error_type_class = PostError
+        error_type_field = "post_errors"
+
+    @classmethod
+    def perform_mutation(cls, _root, info, post_id, media_ids):
+        post = cls.get_node_or_error(
+            info,
+            post_id,
+            field="post_id",
+            only_type=Post,
+            qs=models.Post.objects.prefetched_for_webhook(),
+        )
+
+        # we do not care about media with the to_remove flag set to True
+        # as they will be deleted soon
+        if len(media_ids) != post.media.exclude(to_remove=True).count():
+            raise ValidationError(
+                {
+                    "order": ValidationError(
+                        "Incorrect number of media IDs provided.",
+                        code=PostErrorCode.INVALID,
+                    )
+                }
+            )
+
+        ordered_media = []
+        for media_id in media_ids:
+            media = cls.get_node_or_error(
+                info, media_id, field="order", only_type=PostMedia
+            )
+            if media and media.post != post:
+                raise ValidationError(
+                    {
+                        "order": ValidationError(
+                            "Media %(media_id)s does not belong to this post.",
+                            code=PostErrorCode.NOT_POSTS_IMAGE,
+                            params={"media_id": media_id},
+                        )
+                    }
+                )
+            ordered_media.append(media)
+
+        update_ordered_media(ordered_media)
+
+        info.context.plugins.post_updated(post)
+        # post = ChannelContext(node=post, channel_slug=None)
+        return PostMediaReorder(post=post, media=ordered_media)
+
+
+class PostMediaDelete(BaseMutation):
+    post = graphene.Field(Post)
+    media = graphene.Field(PostMedia)
+
+    class Arguments:
+        id = graphene.ID(required=True, description="ID of a post media to delete.")
+
+    class Meta:
+        description = "Deletes a post media."
+        permissions = (PostPermissions.MANAGE_POSTS,)
+        error_type_class = PostError
+        error_type_field = "post_errors"
+
+    @classmethod
+    def perform_mutation(cls, _root, info, **data):
+        media_obj = cls.get_node_or_error(info, data.get("id"), only_type=PostMedia)
+        if media_obj.to_remove:
+            raise ValidationError(
+                {
+                    "media_id": ValidationError(
+                        "Media not found.",
+                        code=PostErrorCode.NOT_FOUND,
+                    )
+                }
+            )
+        media_id = media_obj.id
+        media_obj.set_to_remove()
+        delete_post_media_task.delay(media_id)
+        media_obj.id = media_id
+        post = models.Post.objects.prefetched_for_webhook().get(
+            pk=media_obj.post_id
+        )
+        info.context.plugins.post_updated(post)
+        # post = ChannelContext(node=post, channel_slug=None)
+        return PostMediaDelete(post=post, media=media_obj)

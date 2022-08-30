@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from ..celeryconf import app
 from ..product.models import ProductMedia
+from ..post.models import PostMedia
 from ..thumbnail.models import Thumbnail
 from .models import EventDelivery, EventDeliveryAttempt, EventPayload
 
@@ -43,3 +44,16 @@ def delete_product_media_task(media_id):
         Thumbnail.objects.filter(product_media=product_media.id).delete()
         product_media.image.delete()
         product_media.delete()
+
+
+@app.task(
+    autoretry_for=(ClientError,),
+    retry_backoff=10,
+    retry_kwargs={"max_retries": 5},
+)
+def delete_post_media_task(media_id):
+    post_media = PostMedia.objects.filter(pk=media_id, to_remove=True).first()
+    if post_media:
+        Thumbnail.objects.filter(post_media=post_media.id).delete()
+        post_media.image.delete()
+        post_media.delete()

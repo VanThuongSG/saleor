@@ -4,7 +4,12 @@ from ..core.connection import create_connection_slice, filter_connection_queryse
 from ..core.fields import FilterConnectionField
 from ..core.utils import from_global_id_or_error
 from ..translations.mutations import PostTranslate
-from .bulk_mutations import PostBulkDelete, PostBulkPublish, PostTypeBulkDelete
+from .bulk_mutations import (
+    PostBulkDelete,
+    PostBulkPublish,
+    PostTypeBulkDelete,
+    PostMediaBulkDelete
+)
 from .filters import PostFilterInput, PostTypeFilterInput
 from .mutations.attributes import (
     PostAttributeAssign,
@@ -19,6 +24,10 @@ from .mutations.posts import (
     PostTypeDelete,
     PostTypeUpdate,
     PostUpdate,
+    PostMediaCreate,
+    PostMediaDelete,
+    PostMediaReorder,
+    PostMediaUpdate,
 )
 from .resolvers import (
     resolve_post,
@@ -87,6 +96,12 @@ class PostMutations(graphene.ObjectType):
     post_bulk_publish = PostBulkPublish.Field()
     post_update = PostUpdate.Field()
     post_translate = PostTranslate.Field()
+
+    post_media_create = PostMediaCreate.Field()
+    post_media_delete = PostMediaDelete.Field()
+    post_media_bulk_delete = PostMediaBulkDelete.Field()
+    post_media_reorder = PostMediaReorder.Field()
+    post_media_update = PostMediaUpdate.Field()
 
     # post type mutations
     post_type_create = PostTypeCreate.Field()

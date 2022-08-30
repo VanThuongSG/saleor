@@ -9,7 +9,7 @@ from ...core.tracing import traced_atomic_transaction
 from ...post import models
 from ..core.mutations import BaseBulkMutation, ModelBulkDeleteMutation
 from ..core.types import NonNullList, PostError
-from .types import Post, PostType
+from .types import Post, PostType, PostMedia
 
 
 class PostBulkDelete(ModelBulkDeleteMutation):
@@ -105,3 +105,20 @@ class PostTypeBulkDelete(ModelBulkDeleteMutation):
             postassignments__assignment__post_type_id__in=instance_pks,
             attribute__input_type__in=AttributeInputType.TYPES_WITH_UNIQUE_VALUES,
         ).delete()
+
+
+class PostMediaBulkDelete(ModelBulkDeleteMutation):
+    class Arguments:
+        ids = NonNullList(
+            graphene.ID,
+            required=True,
+            description="List of product media IDs to delete.",
+        )
+
+    class Meta:
+        description = "Deletes product media."
+        model = models.PostMedia
+        object_type = PostMedia
+        permissions = (PostPermissions.MANAGE_POSTS,)
+        error_type_class = PostError
+        error_type_field = "post_errors"

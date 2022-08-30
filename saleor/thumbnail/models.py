@@ -3,6 +3,7 @@ from django.db import models
 
 from ..account.models import User
 from ..product.models import Category, Collection, ProductMedia
+from ..post.models import PostMedia
 from . import THUMBNAIL_SIZES, ThumbnailFormat
 
 
@@ -36,6 +37,13 @@ class Thumbnail(models.Model):
     )
     product_media = models.ForeignKey(
         ProductMedia,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="thumbnails",
+    )
+    post_media = models.ForeignKey(
+        PostMedia,
         null=True,
         blank=True,
         on_delete=models.CASCADE,

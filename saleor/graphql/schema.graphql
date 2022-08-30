@@ -418,6 +418,63 @@ type Query {
     last: Int
   ): ProductVariantCountableConnection
 
+  """Look up a post by ID or slug."""
+  post(
+    """ID of the post."""
+    id: ID
+
+    """The slug of the post."""
+    slug: String
+  ): Post
+
+  """List of the shop's posts."""
+  posts(
+    """Sort posts."""
+    sortBy: PostSortingInput
+
+    """Filtering options for posts."""
+    filter: PostFilterInput
+
+    """Return the elements in the list that come before the specified cursor."""
+    before: String
+
+    """Return the elements in the list that come after the specified cursor."""
+    after: String
+
+    """Return the first n elements from the list."""
+    first: Int
+
+    """Return the last n elements from the list."""
+    last: Int
+  ): PostCountableConnection
+
+  """Look up a post type by ID."""
+  postType(
+    """ID of the post type."""
+    id: ID!
+  ): PostType
+
+  """List of the post types."""
+  postTypes(
+    """Sort post types."""
+    sortBy: PostTypeSortingInput
+
+    """Filtering options for post types."""
+    filter: PostTypeFilterInput
+
+    """Return the elements in the list that come before the specified cursor."""
+    before: String
+
+    """Return the elements in the list that come after the specified cursor."""
+    after: String
+
+    """Return the first n elements from the list."""
+    first: Int
+
+    """Return the last n elements from the list."""
+    last: Int
+  ): PostTypeCountableConnection
+
   """
   Look up a payment by ID.
   
@@ -473,15 +530,6 @@ type Query {
     slug: String
   ): Page
 
-  """Look up a page by ID or slug."""
-  post(
-    """ID of the page."""
-    id: ID
-
-    """The slug of the page."""
-    slug: String
-  ): Post
-
   """List of the shop's pages."""
   pages(
     """Sort pages."""
@@ -502,27 +550,6 @@ type Query {
     """Return the last n elements from the list."""
     last: Int
   ): PageCountableConnection
-
-  """List of the shop's posts."""
-  posts(
-    """Sort pages."""
-    sortBy: PostSortingInput
-
-    """Filtering options for posts."""
-    filter: PostFilterInput
-
-    """Return the elements in the list that come before the specified cursor."""
-    before: String
-
-    """Return the elements in the list that come after the specified cursor."""
-    after: String
-
-    """Return the first n elements from the list."""
-    first: Int
-
-    """Return the last n elements from the list."""
-    last: Int
-  ): PostCountableConnection
 
   """Look up a page type by ID."""
   pageType(
@@ -550,34 +577,6 @@ type Query {
     """Return the last n elements from the list."""
     last: Int
   ): PageTypeCountableConnection
-
-
-  """Look up a page type by ID."""
-  postType(
-    """ID of the page type."""
-    id: ID!
-  ): PostType
-
-  """List of the post types."""
-  postTypes(
-    """Sort post types."""
-    sortBy: PostTypeSortingInput
-
-    """Filtering options for page types."""
-    filter: PostTypeFilterInput
-
-    """Return the elements in the list that come before the specified cursor."""
-    before: String
-
-    """Return the elements in the list that come after the specified cursor."""
-    after: String
-
-    """Return the first n elements from the list."""
-    first: Int
-
-    """Return the last n elements from the list."""
-    last: Int
-  ): PostTypeCountableConnection
 
   """
   List of activity events to display on homepage (at the moment it only contains order-events).
@@ -4852,12 +4851,14 @@ enum AttributeInputTypeEnum {
 enum AttributeEntityTypeEnum {
   PAGE
   PRODUCT
+  POST
 }
 
 """An enumeration."""
 enum AttributeTypeEnum {
   PRODUCT_TYPE
   PAGE_TYPE
+  POST_TYPE
 }
 
 """An enumeration."""
@@ -9173,10 +9174,10 @@ type CreditCard {
   """Last 4 digits of the card number."""
   lastDigits: String!
 
-  """Two-digit number representing the card’s expiration month."""
+  """Two-digit number representing the cardÆs expiration month."""
   expMonth: Int
 
-  """Four-digit number representing the card’s expiration year."""
+  """Four-digit number representing the cardÆs expiration year."""
   expYear: Int
 }
 
@@ -9846,6 +9847,368 @@ input ProductVariantSortingInput {
 enum ProductVariantSortField {
   """Sort products variants by last modified at."""
   LAST_MODIFIED_AT
+}
+
+"""
+A static post that can be manually added by a shop operator through the dashboard.
+"""
+type Post implements Node & ObjectWithMetadata {
+  id: ID!
+
+  """List of private metadata items. Requires staff permissions to access."""
+  privateMetadata: [MetadataItem!]!
+
+  """
+  A single key from private metadata. Requires staff permissions to access.
+  
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  privateMetafield(key: String!): String
+
+  """
+  Private metadata. Requires staff permissions to access. Use `keys` to control which fields you want to include. The default is to include everything.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  privateMetafields(keys: [String!]): Metadata
+
+  """List of public metadata items. Can be accessed without permissions."""
+  metadata: [MetadataItem!]!
+
+  """
+  A single key from public metadata.
+  
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  metafield(key: String!): String
+
+  """
+  Public metadata. Use `keys` to control which fields you want to include. The default is to include everything.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  metafields(keys: [String!]): Metadata
+  seoTitle: String
+  seoDescription: String
+  title: String!
+
+  """
+  Content of the post.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  content: JSONString
+  publicationDate: Date @deprecated(reason: "This field will be removed in Saleor 4.0. Use the `publishedAt` field to fetch the publication date.")
+
+  """
+  The post publication date.
+  
+  Added in Saleor 3.3.
+  """
+  publishedAt: DateTime
+  isPublished: Boolean!
+  slug: String!
+  postType: PostType!
+  created: DateTime!
+
+  """
+  Content of the post.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  contentJson: JSONString! @deprecated(reason: "This field will be removed in Saleor 4.0. Use the `content` field instead.")
+  externalUrl: String
+
+  """Returns translated post fields for the given language code."""
+  translation(
+    """A language code to return the translation for post."""
+    languageCode: LanguageCodeEnum!
+  ): PostTranslation
+
+  """List of attributes assigned to this post."""
+  attributes: [SelectedAttribute!]!
+  thumbnail(
+    """
+    Size of the image. If not provided, the original image will be returned.
+    """
+    size: Int
+
+    """
+    The format of the image. When not provided, format of the original image will be used. Must be provided together with the size value, otherwise original image will be returned.
+    
+    Added in Saleor 3.6.
+    
+    Note: this API is currently in Feature Preview and can be subject to changes at later point.
+    """
+    format: ThumbnailFormatEnum
+  ): Image
+
+  """Get a single post media by ID."""
+  mediaById(
+    """ID of a post media."""
+    id: ID
+  ): PostMedia
+
+  """Get a single post image by ID."""
+  imageById(
+    """ID of a post image."""
+    id: ID
+  ): PostMedia @deprecated(reason: "This field will be removed in Saleor 4.0. Use the `mediaById` field instead.")
+
+  """List of media for the post."""
+  media: [PostMedia!]
+
+  """List of images for the post."""
+  images: [PostMedia!] @deprecated(reason: "This field will be removed in Saleor 4.0. Use the `media` field instead.")
+}
+
+"""
+Represents a type of post. It defines what attributes are available to posts of this type.
+"""
+type PostType implements Node & ObjectWithMetadata {
+  id: ID!
+
+  """List of private metadata items. Requires staff permissions to access."""
+  privateMetadata: [MetadataItem!]!
+
+  """
+  A single key from private metadata. Requires staff permissions to access.
+  
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  privateMetafield(key: String!): String
+
+  """
+  Private metadata. Requires staff permissions to access. Use `keys` to control which fields you want to include. The default is to include everything.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  privateMetafields(keys: [String!]): Metadata
+
+  """List of public metadata items. Can be accessed without permissions."""
+  metadata: [MetadataItem!]!
+
+  """
+  A single key from public metadata.
+  
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  metafield(key: String!): String
+
+  """
+  Public metadata. Use `keys` to control which fields you want to include. The default is to include everything.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  metafields(keys: [String!]): Metadata
+  name: String!
+  slug: String!
+
+  """Post attributes of that post type."""
+  attributes: [Attribute!]
+
+  """
+  Attributes that can be assigned to the post type.
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  availableAttributes(
+    filter: AttributeFilterInput
+
+    """Return the elements in the list that come before the specified cursor."""
+    before: String
+
+    """Return the elements in the list that come after the specified cursor."""
+    after: String
+
+    """Return the first n elements from the list."""
+    first: Int
+
+    """Return the last n elements from the list."""
+    last: Int
+  ): AttributeCountableConnection
+
+  """
+  Whether post type has posts assigned.
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  hasPosts: Boolean
+}
+
+type PostTranslation implements Node {
+  id: ID!
+
+  """Translation language."""
+  language: LanguageDisplay!
+  seoTitle: String
+  seoDescription: String
+  title: String
+
+  """
+  Translated content of the post.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  content: JSONString
+
+  """
+  Translated description of the post.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  contentJson: JSONString @deprecated(reason: "This field will be removed in Saleor 4.0. Use the `content` field instead.")
+}
+
+"""Represents a post media."""
+type PostMedia implements Node {
+  id: ID!
+  sortOrder: Int
+  alt: String!
+  type: PostMediaType!
+  oembedData: JSONString!
+  url(
+    """
+    Size of the image. If not provided, the original image will be returned.
+    """
+    size: Int
+
+    """
+    The format of the image. When not provided, format of the original image will be used. Must be provided together with the size value, otherwise original image will be returned.
+    
+    Added in Saleor 3.6.
+    
+    Note: this API is currently in Feature Preview and can be subject to changes at later point.
+    """
+    format: ThumbnailFormatEnum
+  ): String!
+}
+
+"""An enumeration."""
+enum PostMediaType {
+  IMAGE
+  VIDEO
+}
+
+type PostCountableConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+  edges: [PostCountableEdge!]!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type PostCountableEdge {
+  """The item at the end of the edge."""
+  node: Post!
+
+  """A cursor for use in pagination."""
+  cursor: String!
+}
+
+input PostSortingInput {
+  """Specifies the direction in which to sort products."""
+  direction: OrderDirection!
+
+  """Sort posts by the selected field."""
+  field: PostSortField!
+}
+
+enum PostSortField {
+  """Sort posts by title."""
+  TITLE
+
+  """Sort posts by slug."""
+  SLUG
+
+  """Sort posts by visibility."""
+  VISIBILITY
+
+  """Sort posts by creation date."""
+  CREATION_DATE
+
+  """
+  Sort posts by publication date.
+  
+  DEPRECATED: this field will be removed in Saleor 4.0.
+  """
+  PUBLICATION_DATE
+
+  """
+  Sort posts by publication date.
+  
+  DEPRECATED: this field will be removed in Saleor 4.0.
+  """
+  PUBLISHED_AT
+}
+
+input PostFilterInput {
+  search: String
+  metadata: [MetadataFilter!]
+  postTypes: [ID!]
+  ids: [ID!]
+}
+
+type PostTypeCountableConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+  edges: [PostTypeCountableEdge!]!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type PostTypeCountableEdge {
+  """The item at the end of the edge."""
+  node: PostType!
+
+  """A cursor for use in pagination."""
+  cursor: String!
+}
+
+input PostTypeSortingInput {
+  """Specifies the direction in which to sort products."""
+  direction: OrderDirection!
+
+  """Sort post types by the selected field."""
+  field: PostTypeSortField!
+}
+
+enum PostTypeSortField {
+  """Sort post types by name."""
+  NAME
+
+  """Sort post types by slug."""
+  SLUG
+}
+
+input PostTypeFilterInput {
+  search: String
 }
 
 type PaymentCountableConnection {
@@ -11864,6 +12227,230 @@ type Mutation {
     """ID of a product variant."""
     variantId: ID!
   ): VariantMediaUnassign
+
+  """
+  Creates a new post. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  postCreate(
+    """Fields required to create a post."""
+    input: PostCreateInput!
+  ): PostCreate
+
+  """
+  Deletes a post. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  postDelete(
+    """ID of a post to delete."""
+    id: ID!
+  ): PostDelete
+
+  """
+  Deletes posts. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  postBulkDelete(
+    """List of post IDs to delete."""
+    ids: [ID!]!
+  ): PostBulkDelete
+
+  """
+  Publish posts. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  postBulkPublish(
+    """List of post IDs to (un)publish."""
+    ids: [ID!]!
+
+    """Determine if posts will be published or not."""
+    isPublished: Boolean!
+  ): PostBulkPublish
+
+  """
+  Updates an existing post. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  postUpdate(
+    """ID of a post to update."""
+    id: ID!
+
+    """Fields required to update a post."""
+    input: PostInput!
+  ): PostUpdate
+
+  """
+  Creates/updates translations for a post. 
+  
+  Requires one of the following permissions: MANAGE_TRANSLATIONS.
+  """
+  postTranslate(
+    """Post ID or PostTranslatableContent ID."""
+    id: ID!
+    input: PostTranslationInput!
+
+    """Translation language code."""
+    languageCode: LanguageCodeEnum!
+  ): PostTranslate
+
+  """
+  Create a media object (image or video URL) associated with post. For image, this mutation must be sent as a `multipart` request. More detailed specs of the upload format can be found here: https://github.com/jaydenseric/graphql-multipart-request-spec 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  postMediaCreate(
+    """Fields required to create a post media."""
+    input: PostMediaCreateInput!
+  ): PostMediaCreate
+
+  """
+  Deletes a post media. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  postMediaDelete(
+    """ID of a post media to delete."""
+    id: ID!
+  ): PostMediaDelete
+
+  """
+  Deletes product media. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  postMediaBulkDelete(
+    """List of product media IDs to delete."""
+    ids: [ID!]!
+  ): PostMediaBulkDelete
+
+  """
+  Changes ordering of the post media. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  postMediaReorder(
+    """IDs of a post media in the desired order."""
+    mediaIds: [ID!]!
+
+    """ID of post that media order will be altered."""
+    postId: ID!
+  ): PostMediaReorder
+
+  """
+  Updates a post media. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  postMediaUpdate(
+    """ID of a post media to update."""
+    id: ID!
+
+    """Fields required to update a post media."""
+    input: PostMediaUpdateInput!
+  ): PostMediaUpdate
+
+  """
+  Create a new post type. 
+  
+  Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+  """
+  postTypeCreate(
+    """Fields required to create post type."""
+    input: PostTypeCreateInput!
+  ): PostTypeCreate
+
+  """
+  Update post type. 
+  
+  Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+  """
+  postTypeUpdate(
+    """ID of the post type to update."""
+    id: ID
+
+    """Fields required to update post type."""
+    input: PostTypeUpdateInput!
+  ): PostTypeUpdate
+
+  """
+  Delete a post type. 
+  
+  Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+  """
+  postTypeDelete(
+    """ID of the post type to delete."""
+    id: ID!
+  ): PostTypeDelete
+
+  """
+  Delete post types. 
+  
+  Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+  """
+  postTypeBulkDelete(
+    """List of post type IDs to delete"""
+    ids: [ID!]!
+  ): PostTypeBulkDelete
+
+  """
+  Assign attributes to a given post type. 
+  
+  Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+  """
+  postAttributeAssign(
+    """The IDs of the attributes to assign."""
+    attributeIds: [ID!]!
+
+    """ID of the post type to assign the attributes into."""
+    postTypeId: ID!
+  ): PostAttributeAssign
+
+  """
+  Unassign attributes from a given post type. 
+  
+  Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+  """
+  postAttributeUnassign(
+    """The IDs of the attributes to unassign."""
+    attributeIds: [ID!]!
+
+    """ID of the post type from which the attributes should be unassign."""
+    postTypeId: ID!
+  ): PostAttributeUnassign
+
+  """
+  Reorder the attributes of a post type. 
+  
+  Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+  """
+  postTypeReorderAttributes(
+    """The list of attribute reordering operations."""
+    moves: [ReorderInput!]!
+
+    """ID of a post type."""
+    postTypeId: ID!
+  ): PostTypeReorderAttributes
+
+  """
+  Reorder post attribute values. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  postReorderAttributeValues(
+    """ID of an attribute."""
+    attributeId: ID!
+
+    """The list of reordering operations for given attribute values."""
+    moves: [ReorderInput!]!
+
+    """ID of a post."""
+    postId: ID!
+  ): PostReorderAttributeValues
 
   """
   Captures the authorized payment amount. 
@@ -16780,6 +17367,437 @@ type VariantMediaUnassign {
   media: ProductMedia
   productErrors: [ProductError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
   errors: [ProductError!]!
+}
+
+"""
+Creates a new post. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostCreate {
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+  post: Post
+}
+
+type PostError {
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String
+
+  """The error code."""
+  code: PostErrorCode!
+
+  """List of attributes IDs which causes the error."""
+  attributes: [ID!]
+
+  """List of attribute values IDs which causes the error."""
+  values: [ID!]
+}
+
+"""An enumeration."""
+enum PostErrorCode {
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  REQUIRED
+  UNIQUE
+  DUPLICATED_INPUT_ITEM
+  ATTRIBUTE_ALREADY_ASSIGNED
+  UNSUPPORTED_MEDIA_PROVIDER
+  MEDIA_ALREADY_ASSIGNED
+  NOT_POSTS_IMAGE
+}
+
+input PostCreateInput {
+  """Post internal name."""
+  slug: String
+
+  """Post title."""
+  title: String
+
+  """
+  Post content.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  content: JSONString
+
+  """List of attributes."""
+  attributes: [AttributeValueInput!]
+
+  """Determines if post is visible in the storefront."""
+  isPublished: Boolean
+
+  """
+  Publication date. ISO 8601 standard. 
+  
+  DEPRECATED: this field will be removed in Saleor 4.0. Use `publishedAt` field instead.
+  """
+  publicationDate: String
+
+  """
+  Publication date time. ISO 8601 standard.
+  
+  Added in Saleor 3.3.
+  """
+  publishedAt: DateTime
+
+  """Search engine optimization fields."""
+  seo: SeoInput
+
+  """Th original post url."""
+  externalUrl: String
+
+  """ID of the post type that post belongs to."""
+  postType: ID!
+}
+
+"""
+Deletes a post. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostDelete {
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+  post: Post
+}
+
+"""
+Deletes posts. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+"""
+Publish posts. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostBulkPublish {
+  """Returns how many objects were affected."""
+  count: Int!
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+"""
+Updates an existing post. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostUpdate {
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+  post: Post
+}
+
+input PostInput {
+  """Post internal name."""
+  slug: String
+
+  """Post title."""
+  title: String
+
+  """
+  Post content.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  content: JSONString
+
+  """List of attributes."""
+  attributes: [AttributeValueInput!]
+
+  """Determines if post is visible in the storefront."""
+  isPublished: Boolean
+
+  """
+  Publication date. ISO 8601 standard. 
+  
+  DEPRECATED: this field will be removed in Saleor 4.0. Use `publishedAt` field instead.
+  """
+  publicationDate: String
+
+  """
+  Publication date time. ISO 8601 standard.
+  
+  Added in Saleor 3.3.
+  """
+  publishedAt: DateTime
+
+  """Search engine optimization fields."""
+  seo: SeoInput
+
+  """Th original post url."""
+  externalUrl: String
+}
+
+"""
+Creates/updates translations for a post. 
+
+Requires one of the following permissions: MANAGE_TRANSLATIONS.
+"""
+type PostTranslate {
+  translationErrors: [TranslationError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [TranslationError!]!
+  post: PostTranslatableContent
+}
+
+type PostTranslatableContent implements Node {
+  id: ID!
+  seoTitle: String
+  seoDescription: String
+  title: String!
+
+  """
+  Content of the post.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  content: JSONString
+
+  """
+  Content of the page.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  contentJson: JSONString @deprecated(reason: "This field will be removed in Saleor 4.0. Use the `content` field instead.")
+
+  """Returns translated page fields for the given language code."""
+  translation(
+    """A language code to return the translation for page."""
+    languageCode: LanguageCodeEnum!
+  ): PostTranslation
+
+  """
+  A static page that can be manually added by a shop operator through the dashboard.
+  """
+  post: Post @deprecated(reason: "This field will be removed in Saleor 4.0. Get model fields from the root level queries.")
+
+  """List of page content attribute values that can be translated."""
+  attributeValues: [AttributeValueTranslatableContent!]!
+}
+
+input PostTranslationInput {
+  seoTitle: String
+  seoDescription: String
+  title: String
+
+  """
+  Translated page content.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  content: JSONString
+}
+
+"""
+Create a media object (image or video URL) associated with post. For image, this mutation must be sent as a `multipart` request. More detailed specs of the upload format can be found here: https://github.com/jaydenseric/graphql-multipart-request-spec 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostMediaCreate {
+  post: Post
+  media: PostMedia
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+input PostMediaCreateInput {
+  """Alt text for a post media."""
+  alt: String
+
+  """Represents an image file in a multipart request."""
+  image: Upload
+
+  """ID of an post."""
+  post: ID!
+
+  """Represents an URL to an external media."""
+  mediaUrl: String
+}
+
+"""
+Deletes a post media. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostMediaDelete {
+  post: Post
+  media: PostMedia
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+"""
+Deletes product media. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostMediaBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+"""
+Changes ordering of the post media. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostMediaReorder {
+  post: Post
+  media: [PostMedia!]
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+"""
+Updates a post media. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostMediaUpdate {
+  post: Post
+  media: PostMedia
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+input PostMediaUpdateInput {
+  """Alt text for a post media."""
+  alt: String
+}
+
+"""
+Create a new post type. 
+
+Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+"""
+type PostTypeCreate {
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+  postType: PostType
+}
+
+input PostTypeCreateInput {
+  """Name of the post type."""
+  name: String
+
+  """Post type slug."""
+  slug: String
+
+  """List of attribute IDs to be assigned to the post type."""
+  addAttributes: [ID!]
+}
+
+"""
+Update post type. 
+
+Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+"""
+type PostTypeUpdate {
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+  postType: PostType
+}
+
+input PostTypeUpdateInput {
+  """Name of the post type."""
+  name: String
+
+  """Post type slug."""
+  slug: String
+
+  """List of attribute IDs to be assigned to the post type."""
+  addAttributes: [ID!]
+
+  """List of attribute IDs to be assigned to the post type."""
+  removeAttributes: [ID!]
+}
+
+"""
+Delete a post type. 
+
+Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+"""
+type PostTypeDelete {
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+  postType: PostType
+}
+
+"""
+Delete post types. 
+
+Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+"""
+type PostTypeBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+"""
+Assign attributes to a given post type. 
+
+Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+"""
+type PostAttributeAssign {
+  """The updated post type."""
+  postType: PostType
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+"""
+Unassign attributes from a given post type. 
+
+Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+"""
+type PostAttributeUnassign {
+  """The updated post type."""
+  postType: PostType
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+"""
+Reorder the attributes of a post type. 
+
+Requires one of the following permissions: MANAGE_POST_TYPES_AND_ATTRIBUTES.
+"""
+type PostTypeReorderAttributes {
+  """Post type from which attributes are reordered."""
+  postType: PostType
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+"""
+Reorder post attribute values. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostReorderAttributeValues {
+  """Post from which attribute values are reordered."""
+  post: Post
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
 }
 
 """

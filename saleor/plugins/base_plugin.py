@@ -53,6 +53,7 @@ if TYPE_CHECKING:
     from ..menu.models import Menu, MenuItem
     from ..order.models import Fulfillment, Order, OrderLine
     from ..page.models import Page, PageType
+    from ..post.models import Post, PostType
     from ..product.models import (
         Category,
         Collection,
@@ -712,6 +713,43 @@ class BasePlugin:
     #  Overwrite this method if you need to trigger specific logic when a page type is
     #  updated.
     page_type_updated: Callable[["PageType", Any], Any]
+
+
+    #  Trigger when post is created.
+    #
+    #  Overwrite this method if you need to trigger specific logic when a post is
+    #  created.
+    post_created: Callable[["Post", Any], Any]
+
+    #  Trigger when post is deleted.
+    #
+    #  Overwrite this method if you need to trigger specific logic when a post is
+    #  deleted.
+    post_deleted: Callable[["Post", Any], Any]
+
+    #  Trigger when post is updated.
+    #
+    #  Overwrite this method if you need to trigger specific logic when a post is
+    #  updated.
+    post_updated: Callable[["Post", Any], Any]
+
+    #  Trigger when post type is created.
+    #
+    #  Overwrite this method if you need to trigger specific logic when a post type is
+    #  created.
+    post_type_created: Callable[["PostType", Any], Any]
+
+    #  Trigger when post type is deleted.
+    #
+    #  Overwrite this method if you need to trigger specific logic when a post type is
+    #  deleted.
+    post_type_deleted: Callable[["PostType", Any], Any]
+
+    #  Trigger when post type is updated.
+    #
+    #  Overwrite this method if you need to trigger specific logic when a post type is
+    #  updated.
+    post_type_updated: Callable[["PostType", Any], Any]
 
     #  Trigger when permission group is created.
     #
