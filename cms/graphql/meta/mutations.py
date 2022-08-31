@@ -6,20 +6,14 @@ from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.db import DatabaseError
 from graphql.error.base import GraphQLError
 
-from ...checkout import models as checkout_models
 from ...core import models
 from ...core.error_codes import MetadataErrorCode
 from ...core.exceptions import PermissionDenied
-from ...discount import models as discount_models
 from ...menu import models as menu_models
-from ...order import models as order_models
-from ...product import models as product_models
-from ...shipping import models as shipping_models
 from ..channel import ChannelContext
 from ..core.mutations import BaseMutation
 from ..core.types import MetadataError, NonNullList
 from ..core.utils import from_global_id_or_error
-from ..payment.utils import metadata_contains_empty_key
 from .extra_methods import MODEL_EXTRA_METHODS, MODEL_EXTRA_PREFETCH
 from .permissions import (
     PRIVATE_META_PERMISSION_MAP,
@@ -95,9 +89,6 @@ class BaseMetadataMutation(BaseMutation):
 
         try:
             type_name, _ = from_global_id_or_error(object_id)
-            # ShippingMethodType represents the ShippingMethod model
-            if type_name == "ShippingMethodType":
-                qs = shipping_models.ShippingMethod.objects
 
             return cls.get_node_or_error(info, object_id, qs=qs)
         except GraphQLError as e:
@@ -114,12 +105,6 @@ class BaseMetadataMutation(BaseMutation):
     @classmethod
     def get_instance_by_token(cls, object_id, qs):
         if not qs:
-            if order := order_models.Order.objects.filter(id=object_id).first():
-                return order
-            if checkout := checkout_models.Checkout.objects.filter(
-                token=object_id
-            ).first():
-                return checkout
             return None
         if qs and "token" in [field.name for field in qs.model._meta.get_fields()]:
             return qs.filter(token=object_id).first()
@@ -136,17 +121,6 @@ class BaseMetadataMutation(BaseMutation):
                 }
             )
 
-    @classmethod
-    def validate_metadata_keys(cls, metadata_list: List[dict]):
-        if metadata_contains_empty_key(metadata_list):
-            raise ValidationError(
-                {
-                    "input": ValidationError(
-                        "Metadata key cannot be empty.",
-                        code=MetadataErrorCode.REQUIRED.value,
-                    )
-                }
-            )
 
     @classmethod
     def get_permissions(cls, info, type_name, object_pk, **data):
@@ -166,8 +140,6 @@ class BaseMetadataMutation(BaseMutation):
 
     @classmethod
     def get_model_for_type_name(cls, info, type_name):
-        if type_name in ["ShippingMethodType", "ShippingMethod"]:
-            return shipping_models.ShippingMethod
 
         graphene_type = info.schema.get_type(type_name).graphene_type
 
@@ -217,12 +189,6 @@ class BaseMetadataMutation(BaseMutation):
         try:
             return from_global_id_or_error(object_id)
         except GraphQLError:
-            if order := order_models.Order.objects.filter(id=object_id).first():
-                return "Order", order.pk
-            if checkout := checkout_models.Checkout.objects.filter(
-                token=object_id
-            ).first():
-                return "Checkout", checkout.pk
             raise ValidationError(
                 {
                     "id": ValidationError(
@@ -249,15 +215,8 @@ class BaseMetadataMutation(BaseMutation):
             [
                 isinstance(instance, Model)
                 for Model in [
-                    discount_models.Sale,
-                    discount_models.Voucher,
                     menu_models.Menu,
                     menu_models.MenuItem,
-                    product_models.Collection,
-                    product_models.Product,
-                    product_models.ProductVariant,
-                    shipping_models.ShippingMethod,
-                    shipping_models.ShippingZone,
                 ]
             ]
         )

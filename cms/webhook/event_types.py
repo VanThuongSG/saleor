@@ -52,7 +52,7 @@ class WebhookEventAsyncType:
 
     POST_CREATED = "post_created"
     POST_UPDATED = "post_updated"
-    POST_DELETED = "ppost_deleted"
+    POST_DELETED = "post_deleted"
 
     POST_TYPE_CREATED = "post_type_created"
     POST_TYPE_UPDATED = "post_type_updated"
@@ -261,16 +261,13 @@ SUBSCRIBABLE_EVENTS = [
     WebhookEventAsyncType.PAGE_DELETED,
     WebhookEventAsyncType.PAGE_TYPE_CREATED,
     WebhookEventAsyncType.PAGE_TYPE_UPDATED,
-    WebhookEventAsyncType.PAGE_TYPE_DELETED,
-
-    
+    WebhookEventAsyncType.PAGE_TYPE_DELETED,    
     WebhookEventAsyncType.POST_CREATED,
     WebhookEventAsyncType.POST_UPDATED,
     WebhookEventAsyncType.POST_DELETED,
     WebhookEventAsyncType.POST_TYPE_CREATED,
     WebhookEventAsyncType.POST_TYPE_UPDATED,
     WebhookEventAsyncType.POST_TYPE_DELETED,
-
     WebhookEventAsyncType.PERMISSION_GROUP_CREATED,
     WebhookEventAsyncType.PERMISSION_GROUP_UPDATED,
     WebhookEventAsyncType.PERMISSION_GROUP_DELETED,

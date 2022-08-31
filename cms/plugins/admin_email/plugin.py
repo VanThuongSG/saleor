@@ -21,10 +21,7 @@ from ..email_common import (
 from ..models import EmailTemplate, PluginConfiguration
 from . import constants
 from .notify_events import (
-    send_csv_export_failed,
-    send_csv_export_success,
     send_set_staff_password_email,
-    send_staff_order_confirmation,
     send_staff_reset_password,
 )
 
@@ -36,8 +33,6 @@ def get_admin_event_map():
         AdminNotifyEvent.STAFF_ORDER_CONFIRMATION: send_staff_order_confirmation,
         AdminNotifyEvent.ACCOUNT_SET_STAFF_PASSWORD: send_set_staff_password_email,
         AdminNotifyEvent.ACCOUNT_STAFF_RESET_PASSWORD: send_staff_reset_password,
-        AdminNotifyEvent.CSV_EXPORT_SUCCESS: send_csv_export_success,
-        AdminNotifyEvent.CSV_EXPORT_FAILED: send_csv_export_failed,
     }
 
 
@@ -56,15 +51,8 @@ class AdminEmailPlugin(BasePlugin):
         {
             "name": constants.STAFF_PASSWORD_RESET_TEMPLATE_FIELD,
             "value": DEFAULT_EMAIL_VALUE,
-        },
-        {
-            "name": constants.STAFF_ORDER_CONFIRMATION_SUBJECT_FIELD,
-            "value": constants.STAFF_ORDER_CONFIRMATION_DEFAULT_SUBJECT,
-        },
-        {
-            "name": constants.STAFF_ORDER_CONFIRMATION_TEMPLATE_FIELD,
-            "value": DEFAULT_EMAIL_VALUE,
-        },
+        },       
+        
         {
             "name": constants.SET_STAFF_PASSWORD_SUBJECT_FIELD,
             "value": constants.SET_STAFF_PASSWORD_DEFAULT_SUBJECT,
@@ -72,23 +60,7 @@ class AdminEmailPlugin(BasePlugin):
         {
             "name": constants.SET_STAFF_PASSWORD_TEMPLATE_FIELD,
             "value": DEFAULT_EMAIL_VALUE,
-        },
-        {
-            "name": constants.CSV_EXPORT_SUCCESS_SUBJECT_FIELD,
-            "value": constants.CSV_EXPORT_SUCCESS_DEFAULT_SUBJECT,
-        },
-        {
-            "name": constants.CSV_EXPORT_SUCCESS_TEMPLATE_FIELD,
-            "value": DEFAULT_EMAIL_VALUE,
-        },
-        {
-            "name": constants.CSV_EXPORT_FAILED_SUBJECT_FIELD,
-            "value": constants.CSV_EXPORT_FAILED_DEFAULT_SUBJECT,
-        },
-        {
-            "name": constants.CSV_EXPORT_FAILED_TEMPLATE_FIELD,
-            "value": DEFAULT_EMAIL_VALUE,
-        },
+        },        
     ] + DEFAULT_EMAIL_CONFIGURATION  # type: ignore
 
     CONFIG_STRUCTURE = {
@@ -101,17 +73,7 @@ class AdminEmailPlugin(BasePlugin):
             "type": ConfigurationTypeField.MULTILINE,
             "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
             "label": "Reset password template",
-        },
-        constants.STAFF_ORDER_CONFIRMATION_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
-            "label": "Order confirmation subject",
-        },
-        constants.STAFF_ORDER_CONFIRMATION_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "Order confirmation template",
-        },
+        },        
         constants.SET_STAFF_PASSWORD_SUBJECT_FIELD: {
             "type": ConfigurationTypeField.STRING,
             "help_text": DEFAULT_SUBJECT_HELP_TEXT,
@@ -121,27 +83,7 @@ class AdminEmailPlugin(BasePlugin):
             "type": ConfigurationTypeField.MULTILINE,
             "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
             "label": "Set password email template",
-        },
-        constants.CSV_EXPORT_SUCCESS_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
-            "label": "CSV product export success subject",
-        },
-        constants.CSV_EXPORT_SUCCESS_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "CSV product export success template",
-        },
-        constants.CSV_EXPORT_FAILED_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
-            "label": "CSV export failed subject",
-        },
-        constants.CSV_EXPORT_FAILED_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "CSV export failed template",
-        },
+        },        
     }
     CONFIG_STRUCTURE.update(DEFAULT_EMAIL_CONFIG_STRUCTURE)
     CONFIG_STRUCTURE["host"][

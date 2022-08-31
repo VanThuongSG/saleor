@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 from collections import defaultdict
 from datetime import datetime
-from typing import TYPE_CHECKING, Dict, List
 
 import graphene
 import pytz
@@ -10,16 +9,12 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import transaction
 
-from ....attribute import AttributeInputType, AttributeType
-from ....attribute import models as attribute_models
 from ....core.permissions import PostPermissions, PostTypePermissions
 from ....core.tasks import delete_post_media_task
 from ....core.tracing import traced_atomic_transaction
 from ....core.utils.validators import get_oembed_data
 from ....post import PostMediaTypes, models
 from ....post.error_codes import PostErrorCode
-from ...attribute.types import AttributeValueInput
-from ...attribute.utils import AttributeAssignmentMixin
 from ...core.descriptions import ADDED_IN_33, DEPRECATED_IN_3X_INPUT, RICH_CONTENT
 from ...core.fields import JSONString
 from ...core.mutations import ModelDeleteMutation, ModelMutation, BaseMutation
@@ -38,15 +33,11 @@ from ..types import Post, PostType, PostMedia
 from ..utils import update_ordered_media
 
 
-if TYPE_CHECKING:
-    from ....attribute.models import Attribute
-
 
 class PostInput(graphene.InputObjectType):
     slug = graphene.String(description="Post internal name.")
     title = graphene.String(description="Post title.")
     content = JSONString(description="Post content." + RICH_CONTENT)
-    attributes = NonNullList(AttributeValueInput, description="List of attributes.")
     is_published = graphene.Boolean(
         description="Determines if post is visible in the storefront."
     )
@@ -83,13 +74,6 @@ class PostCreate(ModelMutation):
         error_type_class = PostError
         error_type_field = "post_errors"
 
-    @classmethod
-    def clean_attributes(cls, attributes: dict, post_type: models.PostType):
-        attributes_qs = post_type.post_attributes
-        attributes = AttributeAssignmentMixin.clean_input(
-            attributes, attributes_qs, is_post_attributes=True
-        )
-        return attributes
 
     @classmethod
     def clean_input(cls, info, instance, data):
@@ -167,18 +151,6 @@ class PostCreate(ModelMutation):
         elif "publication_date" in cleaned_input or "published_at" in cleaned_input:
             cleaned_input["published_at"] = publication_date
 
-        attributes = cleaned_input.get("attributes")
-        post_type = (
-            instance.post_type if instance.pk else cleaned_input.get("post_type")
-        )
-        if attributes and post_type:
-            try:
-                cleaned_input["attributes"] = cls.clean_attributes(
-                    attributes, post_type
-                )
-            except ValidationError as exc:
-                raise ValidationError({"attributes": exc})
-
         clean_seo_fields(cleaned_input)
         return cleaned_input
 
@@ -186,10 +158,6 @@ class PostCreate(ModelMutation):
     @traced_atomic_transaction()
     def _save_m2m(cls, info, instance, cleaned_data):
         super()._save_m2m(info, instance, cleaned_data)
-
-        attributes = cleaned_data.get("attributes")
-        if attributes:
-            AttributeAssignmentMixin.save(instance, attributes)
 
     @classmethod
     def save(cls, info, instance, cleaned_input):
@@ -224,13 +192,6 @@ class PostUpdate(PostCreate):
         error_type_class = PostError
         error_type_field = "post_errors"
 
-    @classmethod
-    def clean_attributes(cls, attributes: dict, post_type: models.PostType):
-        attributes_qs = post_type.post_attributes
-        attributes = AttributeAssignmentMixin.clean_input(
-            attributes, attributes_qs, creation=False, is_post_attributes=True
-        )
-        return attributes
 
     @classmethod
     def save(cls, info, instance, cleaned_input):
@@ -259,58 +220,13 @@ class PostDelete(ModelDeleteMutation):
         transaction.on_commit(lambda: info.context.plugins.post_deleted(post))
         return response
 
-    @staticmethod
-    def delete_assigned_attribute_values(instance):
-        attribute_models.AttributeValue.objects.filter(
-            postassignments__post_id=instance.id,
-            attribute__input_type__in=AttributeInputType.TYPES_WITH_UNIQUE_VALUES,
-        ).delete()
-
 
 class PostTypeCreateInput(graphene.InputObjectType):
     name = graphene.String(description="Name of the post type.")
     slug = graphene.String(description="Post type slug.")
-    add_attributes = NonNullList(
-        graphene.ID,
-        description="List of attribute IDs to be assigned to the post type.",
-    )
 
 
-class PostTypeUpdateInput(PostTypeCreateInput):
-    remove_attributes = NonNullList(
-        graphene.ID,
-        description="List of attribute IDs to be assigned to the post type.",
-    )
-
-
-class PostTypeMixin:
-    @classmethod
-    def validate_attributes(
-        cls,
-        errors: Dict[str, List[ValidationError]],
-        attributes: List["Attribute"],
-        field: str,
-    ):
-        """All attributes must be post type attribute.
-
-        Raise an error if any of the attributes are not post attribute.
-        """
-        if attributes:
-            not_valid_attributes = [
-                graphene.Node.to_global_id("Attribute", attr.pk)
-                for attr in attributes
-                if attr.type != AttributeType.POST_TYPE
-            ]
-            if not_valid_attributes:
-                error = ValidationError(
-                    "Only post type attributes allowed.",
-                    code=PostErrorCode.INVALID.value,
-                    params={"attributes": not_valid_attributes},
-                )
-                errors[field].append(error)
-
-
-class PostTypeCreate(PostTypeMixin, ModelMutation):
+class PostTypeCreate(ModelMutation):
     class Arguments:
         input = PostTypeCreateInput(
             description="Fields required to create post type.", required=True
@@ -357,10 +273,10 @@ class PostTypeCreate(PostTypeMixin, ModelMutation):
         info.context.plugins.post_type_created(instance)
 
 
-class PostTypeUpdate(PostTypeMixin, ModelMutation):
+class PostTypeUpdate(ModelMutation):
     class Arguments:
         id = graphene.ID(description="ID of the post type to update.")
-        input = PostTypeUpdateInput(
+        input = PostTypeCreateInput(
             description="Fields required to update post type.", required=True
         )
 
@@ -375,9 +291,7 @@ class PostTypeUpdate(PostTypeMixin, ModelMutation):
     @classmethod
     def clean_input(cls, info, instance, data):
         errors = defaultdict(list)
-        error = check_for_duplicates(
-            data, "add_attributes", "remove_attributes", "attributes"
-        )
+        error = check_for_duplicates(data)
         if error:
             error.code = PostErrorCode.DUPLICATED_INPUT_ITEM.value
             errors["attributes"].append(error)
@@ -391,12 +305,6 @@ class PostTypeUpdate(PostTypeMixin, ModelMutation):
             error.code = PostErrorCode.REQUIRED
             errors["slug"].append(error)
 
-        add_attributes = cleaned_input.get("add_attributes")
-        cls.validate_attributes(errors, add_attributes, "add_attributes")
-
-        remove_attributes = cleaned_input.get("remove_attributes")
-        cls.validate_attributes(errors, remove_attributes, "remove_attributes")
-
         if errors:
             raise ValidationError(errors)
 
@@ -404,13 +312,7 @@ class PostTypeUpdate(PostTypeMixin, ModelMutation):
 
     @classmethod
     def _save_m2m(cls, info, instance, cleaned_data):
-        super()._save_m2m(info, instance, cleaned_data)
-        remove_attributes = cleaned_data.get("remove_attributes")
-        add_attributes = cleaned_data.get("add_attributes")
-        if remove_attributes is not None:
-            instance.post_attributes.remove(*remove_attributes)
-        if add_attributes is not None:
-            instance.post_attributes.add(*add_attributes)
+        super()._save_m2m(info, instance, cleaned_data)        
 
     @classmethod
     def post_save_action(cls, info, instance, cleaned_input):
@@ -432,19 +334,8 @@ class PostTypeDelete(ModelDeleteMutation):
     @classmethod
     @traced_atomic_transaction()
     def perform_mutation(cls, _root, info, **data):
-        node_id = data.get("id")
-        post_type_pk = cls.get_global_id_or_error(
-            node_id, only_type=PostType, field="pk"
-        )
-        cls.delete_assigned_attribute_values(post_type_pk)
         return super().perform_mutation(_root, info, **data)
 
-    @staticmethod
-    def delete_assigned_attribute_values(instance_pk):
-        attribute_models.AttributeValue.objects.filter(
-            attribute__input_type__in=AttributeInputType.TYPES_WITH_UNIQUE_VALUES,
-            postassignments__assignment__post_type_id=instance_pk,
-        ).delete()
 
     @classmethod
     def post_save_action(cls, info, instance, cleaned_input):
@@ -554,7 +445,6 @@ class PostMediaCreate(BaseMutation):
                 )
 
         info.context.plugins.post_updated(post)
-        # post = ChannelContext(node=post, channel_slug=None)
         return PostMediaCreate(post=post, media=media)
 
 
@@ -589,7 +479,6 @@ class PostMediaUpdate(BaseMutation):
             media.alt = alt
             media.save(update_fields=["alt"])
         info.context.plugins.post_updated(post)
-        # post = ChannelContext(node=post, channel_slug=None)
         return PostMediaUpdate(post=post, media=media)
 
 
@@ -656,7 +545,6 @@ class PostMediaReorder(BaseMutation):
         update_ordered_media(ordered_media)
 
         info.context.plugins.post_updated(post)
-        # post = ChannelContext(node=post, channel_slug=None)
         return PostMediaReorder(post=post, media=ordered_media)
 
 
@@ -693,5 +581,4 @@ class PostMediaDelete(BaseMutation):
             pk=media_obj.post_id
         )
         info.context.plugins.post_updated(post)
-        # post = ChannelContext(node=post, channel_slug=None)
         return PostMediaDelete(post=post, media=media_obj)

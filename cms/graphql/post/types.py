@@ -2,17 +2,12 @@ from typing import List
 
 import graphene
 
-from ...attribute import models as attribute_models
 from ...core.permissions import PostPermissions
 from ...core.tracing import traced_resolver
 from ...post import models
 from ...thumbnail.utils import get_image_or_proxy_url, get_thumbnail_size
-from ..attribute.filters import AttributeFilterInput
-from ..attribute.types import Attribute, AttributeCountableConnection, SelectedAttribute
 from ..core.connection import (
     CountableConnection,
-    create_connection_slice,
-    filter_connection_queryset,
 )
 from ..core.descriptions import ADDED_IN_33, DEPRECATED_IN_3X_FIELD, RICH_CONTENT
 from ..core.federation import federated_entity, resolve_federation_references
@@ -29,10 +24,8 @@ from ..translations.fields import TranslationField
 from ..translations.types import PostTranslation
 from .dataloaders import (
     ImagesByPostIdLoader,
-    PostAttributesByPostTypeIdLoader,
     PostsByPostTypeIdLoader,
     PostTypeByIdLoader,
-    SelectedAttributesByPostIdLoader,
     MediaByPostIdLoader,
     ThumbnailByPostMediaIdSizeAndFormatLoader,
 )
@@ -42,18 +35,7 @@ from .enums import PostMediaType
 class PostType(ModelObjectType):
     id = graphene.GlobalID(required=True)
     name = graphene.String(required=True)
-    slug = graphene.String(required=True)
-    attributes = NonNullList(
-        Attribute, description="Post attributes of that post type."
-    )
-    available_attributes = FilterConnectionField(
-        AttributeCountableConnection,
-        filter=AttributeFilterInput(),
-        description="Attributes that can be assigned to the post type.",
-        permissions=[
-            PostPermissions.MANAGE_POSTS,
-        ],
-    )
+    slug = graphene.String(required=True)    
     has_posts = PermissionsField(
         graphene.Boolean,
         description="Whether post type has posts assigned.",
@@ -73,18 +55,6 @@ class PostType(ModelObjectType):
     @staticmethod
     def get_model():
         return models.PostType
-
-    @staticmethod
-    def resolve_attributes(root: models.PostType, info):
-        return PostAttributesByPostTypeIdLoader(info.context).load(root.pk)
-
-    @staticmethod
-    def resolve_available_attributes(root: models.PostType, info, **kwargs):
-        qs = attribute_models.Attribute.objects.get_unassigned_post_type_attributes(
-            root.pk
-        )
-        qs = filter_connection_queryset(qs, kwargs, info.context)
-        return create_connection_slice(qs, info, kwargs, AttributeCountableConnection)
 
     @staticmethod
     def resolve_has_posts(root: models.PostType, info):
@@ -129,12 +99,7 @@ class Post(ModelObjectType):
         required=True,
     )
     external_url = graphene.String()
-    translation = TranslationField(PostTranslation, type_name="post")
-    attributes = NonNullList(
-        SelectedAttribute,
-        required=True,
-        description="List of attributes assigned to this post.",
-    )
+    translation = TranslationField(PostTranslation, type_name="post")    
     thumbnail = ThumbnailField()
     media_by_id = graphene.Field(
         lambda: PostMedia,
@@ -183,10 +148,6 @@ class Post(ModelObjectType):
     def resolve_content_json(root: models.Post, _info):
         content = root.content
         return content if content is not None else {}
-
-    @staticmethod
-    def resolve_attributes(root: models.Post, info):
-        return SelectedAttributesByPostIdLoader(info.context).load(root.id)
 
     @staticmethod
     @traced_resolver

@@ -2,8 +2,6 @@ import graphene
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from ...attribute import AttributeInputType
-from ...attribute import models as attribute_models
 from ...core.permissions import PagePermissions, PageTypePermissions
 from ...core.tracing import traced_atomic_transaction
 from ...page import models
@@ -35,13 +33,6 @@ class PageBulkDelete(ModelBulkDeleteMutation):
             return 0, error
         cls.delete_assigned_attribute_values(pks)
         return super().perform_mutation(_root, info, ids, **data)
-
-    @staticmethod
-    def delete_assigned_attribute_values(instance_pks):
-        attribute_models.AttributeValue.objects.filter(
-            pageassignments__page_id__in=instance_pks,
-            attribute__input_type__in=AttributeInputType.TYPES_WITH_UNIQUE_VALUES,
-        ).delete()
 
 
 class PageBulkPublish(BaseBulkMutation):
@@ -98,10 +89,3 @@ class PageTypeBulkDelete(ModelBulkDeleteMutation):
         queryset.delete()
         for pt in page_types:
             transaction.on_commit(lambda: info.context.plugins.page_type_deleted(pt))
-
-    @staticmethod
-    def delete_assigned_attribute_values(instance_pks):
-        attribute_models.AttributeValue.objects.filter(
-            pageassignments__assignment__page_type_id__in=instance_pks,
-            attribute__input_type__in=AttributeInputType.TYPES_WITH_UNIQUE_VALUES,
-        ).delete()

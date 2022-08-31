@@ -382,7 +382,7 @@ DEFAULT_MAX_EMAIL_DISPLAY_NAME_LENGTH = 78
 
 COUNTRIES_OVERRIDE = {"EU": "European Union"}
 
-OPENEXCHANGERATES_API_KEY = os.environ.get("OPENEXCHANGERATES_API_KEY")
+# OPENEXCHANGERATES_API_KEY = os.environ.get("OPENEXCHANGERATES_API_KEY")
 
 GOOGLE_ANALYTICS_TRACKING_ID = os.environ.get("GOOGLE_ANALYTICS_TRACKING_ID")
 
@@ -393,9 +393,9 @@ def get_host():
     return Site.objects.get_current().domain
 
 
-PAYMENT_HOST = get_host
+# PAYMENT_HOST = get_host
 
-PAYMENT_MODEL = "order.Payment"
+# PAYMENT_MODEL = "order.Payment"
 
 MAX_USER_ADDRESSES = int(os.environ.get("MAX_USER_ADDRESSES", 100))
 
@@ -605,7 +605,7 @@ REAL_IP_ENVIRON = os.environ.get("REAL_IP_ENVIRON", "REMOTE_ADDR")
 DEFAULT_MENUS = {"top_menu_name": "navbar", "bottom_menu_name": "footer"}
 
 # Slug for channel precreated in Django migrations
-DEFAULT_CHANNEL_SLUG = os.environ.get("DEFAULT_CHANNEL_SLUG", "default-channel")
+DEFAULT_CHANNEL_SLUG = os.environ.get("DEFAULT_CHANNEL_SLUG", "vn")
 
 # Set this to `True` if you want to create default channel, warehouse, product type and
 # category during migrations. It makes it easier for the users to create their first
@@ -647,19 +647,7 @@ GRAPHQL_QUERY_MAX_COMPLEXITY = int(
 FEDERATED_QUERY_MAX_ENTITIES = int(os.environ.get("FEDERATED_QUERY_MAX_ENTITIES", 100))
 
 BUILTIN_PLUGINS = [
-    "cms.plugins.avatax.plugin.AvataxPlugin",
-    "cms.plugins.vatlayer.plugin.VatlayerPlugin",
-    "cms.plugins.webhook.plugin.WebhookPlugin",
-    "cms.payment.gateways.dummy.plugin.DummyGatewayPlugin",
-    "cms.payment.gateways.dummy_credit_card.plugin.DummyCreditCardGatewayPlugin",
-    "cms.payment.gateways.stripe.deprecated.plugin.DeprecatedStripeGatewayPlugin",
-    "cms.payment.gateways.stripe.plugin.StripeGatewayPlugin",
-    "cms.payment.gateways.braintree.plugin.BraintreeGatewayPlugin",
-    "cms.payment.gateways.razorpay.plugin.RazorpayGatewayPlugin",
-    "cms.payment.gateways.adyen.plugin.AdyenGatewayPlugin",
-    "cms.payment.gateways.authorize_net.plugin.AuthorizeNetGatewayPlugin",
-    "cms.payment.gateways.np_atobarai.plugin.NPAtobaraiGatewayPlugin",
-    "cms.plugins.invoicing.plugin.InvoicingPlugin",
+    "cms.plugins.webhook.plugin.WebhookPlugin",    
     "cms.plugins.user_email.plugin.UserEmailPlugin",
     "cms.plugins.admin_email.plugin.AdminEmailPlugin",
     "cms.plugins.sendgrid.plugin.SendgridEmailPlugin",

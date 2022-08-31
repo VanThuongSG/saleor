@@ -1,20 +1,11 @@
 import graphene
 
 from .mutations import FileUpload
-from .types import NonNullList, TaxType
+from .types import NonNullList
 
 
 class CoreQueries(graphene.ObjectType):
-    tax_types = NonNullList(
-        TaxType, description="List of all tax rates available from tax gateway."
-    )
-
-    def resolve_tax_types(self, info):
-        manager = info.context.plugins
-        return [
-            TaxType(description=tax.description, tax_code=tax.code)
-            for tax in manager.get_tax_rate_type_choices()
-        ]
+    pass
 
 
 class CoreMutations(graphene.ObjectType):

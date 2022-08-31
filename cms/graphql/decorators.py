@@ -4,16 +4,8 @@ from typing import Iterable, Union
 
 from graphql.execution.base import ResolveInfo
 
-from ..attribute import AttributeType
 from ..core.exceptions import PermissionDenied
 from ..core.permissions import (
-    PagePermissions,
-    PageTypePermissions,
-    PostPermissions,
-    PostTypePermissions,
-    ProductPermissions,
-    ProductTypePermissions,
-    has_one_of_permissions,
     is_app,
     is_staff_user,
     one_of_permissions_or_auth_filter_required,
@@ -109,36 +101,3 @@ def _check_staff_member_or_app(context):
 
 
 staff_member_or_app_required = account_passes_test(_check_staff_member_or_app)
-
-
-def check_attribute_required_permissions():
-    """Check attribute permissions that depend on attribute type.
-
-    As an attribute can belong to the product or to the page,
-    different permissions need to be checked.
-    """
-
-    def check_perms(context, attribute):
-        requestor = get_user_or_app_from_context(context)
-        if attribute.type == AttributeType.PAGE_TYPE:
-            permissions = (
-                PagePermissions.MANAGE_PAGES,
-                PageTypePermissions.MANAGE_PAGE_TYPES_AND_ATTRIBUTES,
-            )
-        elif attribute.type == AttributeType.POST_TYPE:
-            permissions = (
-                PostPermissions.MANAGE_POSTS,
-                PostTypePermissions.MANAGE_POST_TYPES_AND_ATTRIBUTES,
-            )
-        else:
-            permissions = (
-                ProductPermissions.MANAGE_PRODUCTS,
-                ProductTypePermissions.MANAGE_PRODUCT_TYPES_AND_ATTRIBUTES,
-            )
-        if not has_one_of_permissions(
-            requestor,
-            permissions,
-        ):
-            raise PermissionDenied(permissions=permissions)
-
-    return account_passes_test_for_attribute(check_perms)

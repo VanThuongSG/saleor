@@ -6,22 +6,7 @@ from .views import GraphQLView
 
 class ReadOnlyMiddleware:
     ALLOWED_MUTATIONS = [
-        "accountRegister",
-        "checkoutAddPromoCode",
-        "checkoutBillingAddressUpdate",
-        "checkoutComplete",
-        "checkoutCreate",
-        "checkoutCustomerAttach",
-        "checkoutCustomerDetach",
-        "checkoutDeliveryMethodUpdate",
-        "checkoutEmailUpdate",
-        "checkoutLineDelete",
-        "checkoutLinesAdd",
-        "checkoutLinesUpdate",
-        "checkoutRemovePromoCode",
-        "checkoutPaymentCreate",
-        "checkoutShippingAddressUpdate",
-        "checkoutShippingMethodUpdate",
+        "accountRegister",        
         "tokenCreate",
         "tokenVerify",
         "tokenRefresh",

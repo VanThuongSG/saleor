@@ -4,54 +4,30 @@ import graphene
 from django.conf import settings
 
 from ....core.tracing import traced_resolver
-from ...account.enums import AddressTypeEnum
 from ..descriptions import ADDED_IN_36, PREVIEW_FEATURE
 from ..enums import (
     AccountErrorCode,
     AppErrorCode,
-    AttributeErrorCode,
     ChannelErrorCode,
-    CheckoutErrorCode,
-    CollectionErrorCode,
-    DiscountErrorCode,
-    ExportErrorCode,
     ExternalNotificationTriggerErrorCode,
-    GiftCardErrorCode,
-    GiftCardSettingsErrorCode,
-    InvoiceErrorCode,
     JobStatusEnum,
     LanguageCodeEnum,
     MenuErrorCode,
     MetadataErrorCode,
-    OrderErrorCode,
     OrderSettingsErrorCode,
     PageErrorCode,
-    PaymentErrorCode,
     PermissionEnum,
     PermissionGroupErrorCode,
     PostErrorCode,
     PluginErrorCode,
-    ProductErrorCode,
-    ShippingErrorCode,
     ShopErrorCode,
-    StockErrorCode,
     ThumbnailFormatEnum,
     TimePeriodTypeEnum,
-    TransactionCreateErrorCode,
-    TransactionRequestActionErrorCode,
-    TransactionUpdateErrorCode,
     TranslationErrorCode,
     UploadErrorCode,
-    WarehouseErrorCode,
     WebhookErrorCode,
-    WeightUnitsEnum,
 )
 from ..scalars import PositiveDecimal
-from .money import VAT
-
-# deprecated - this is temporary constant that contains the graphql types
-# which has double id available - uuid and old int id
-TYPES_WITH_DOUBLE_ID_AVAILABLE = ["Order", "OrderLine", "OrderDiscount", "CheckoutLine"]
 
 
 class NonNullList(graphene.List):
@@ -60,12 +36,6 @@ class NonNullList(graphene.List):
     def __init__(self, of_type, *args, **kwargs):
         of_type = graphene.NonNull(of_type)
         super(NonNullList, self).__init__(of_type, *args, **kwargs)
-
-
-class CountryDisplay(graphene.ObjectType):
-    code = graphene.String(description="Country code.", required=True)
-    country = graphene.String(description="Country name.", required=True)
-    vat = graphene.Field(VAT, description="Country tax.")
 
 
 class LanguageDisplay(graphene.ObjectType):
@@ -101,9 +71,6 @@ class Error(graphene.ObjectType):
 
 class AccountError(Error):
     code = AccountErrorCode(description="The error code.", required=True)
-    address_type = AddressTypeEnum(
-        description="A type of address that causes the error.", required=False
-    )
 
 
 class AppError(Error):
@@ -113,10 +80,6 @@ class AppError(Error):
         description="List of permissions which causes the error.",
         required=False,
     )
-
-
-class AttributeError(Error):
-    code = AttributeErrorCode(description="The error code.", required=True)
 
 
 class StaffError(AccountError):
@@ -139,53 +102,6 @@ class StaffError(AccountError):
 
 class ChannelError(Error):
     code = ChannelErrorCode(description="The error code.", required=True)
-    shipping_zones = NonNullList(
-        graphene.ID,
-        description="List of shipping zone IDs which causes the error.",
-        required=False,
-    )
-    warehouses = NonNullList(
-        graphene.ID,
-        description="List of warehouses IDs which causes the error.",
-        required=False,
-    )
-
-
-class CheckoutError(Error):
-    code = CheckoutErrorCode(description="The error code.", required=True)
-    variants = NonNullList(
-        graphene.ID,
-        description="List of varint IDs which causes the error.",
-        required=False,
-    )
-    lines = NonNullList(
-        graphene.ID,
-        description="List of line Ids which cause the error.",
-        required=False,
-    )
-    address_type = AddressTypeEnum(
-        description="A type of address that causes the error.", required=False
-    )
-
-
-class ProductWithoutVariantError(Error):
-    products = NonNullList(
-        graphene.ID,
-        description="List of products IDs which causes the error.",
-    )
-
-
-class DiscountError(ProductWithoutVariantError):
-    code = DiscountErrorCode(description="The error code.", required=True)
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channels IDs which causes the error.",
-        required=False,
-    )
-
-
-class ExportError(Error):
-    code = ExportErrorCode(description="The error code.", required=True)
 
 
 class ExternalNotificationError(Error):
@@ -202,37 +118,8 @@ class OrderSettingsError(Error):
     code = OrderSettingsErrorCode(description="The error code.", required=True)
 
 
-class GiftCardSettingsError(Error):
-    code = GiftCardSettingsErrorCode(description="The error code.", required=True)
-
-
 class MetadataError(Error):
     code = MetadataErrorCode(description="The error code.", required=True)
-
-
-class OrderError(Error):
-    code = OrderErrorCode(description="The error code.", required=True)
-    warehouse = graphene.ID(
-        description="Warehouse ID which causes the error.",
-        required=False,
-    )
-    order_lines = NonNullList(
-        graphene.ID,
-        description="List of order line IDs that cause the error.",
-        required=False,
-    )
-    variants = NonNullList(
-        graphene.ID,
-        description="List of product variants that are associated with the error",
-        required=False,
-    )
-    address_type = AddressTypeEnum(
-        description="A type of address that causes the error.", required=False
-    )
-
-
-class InvoiceError(Error):
-    code = InvoiceErrorCode(description="The error code.", required=True)
 
 
 class PermissionGroupError(Error):
@@ -249,77 +136,8 @@ class PermissionGroupError(Error):
     )
 
 
-class ProductError(Error):
-    code = ProductErrorCode(description="The error code.", required=True)
-    attributes = NonNullList(
-        graphene.ID,
-        description="List of attributes IDs which causes the error.",
-        required=False,
-    )
-    values = NonNullList(
-        graphene.ID,
-        description="List of attribute values IDs which causes the error.",
-        required=False,
-    )
-
-
-class CollectionError(ProductWithoutVariantError):
-    code = CollectionErrorCode(description="The error code.", required=True)
-
-
-class ProductChannelListingError(ProductError):
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channels IDs which causes the error.",
-        required=False,
-    )
-    variants = NonNullList(
-        graphene.ID,
-        description="List of variants IDs which causes the error.",
-        required=False,
-    )
-
-
-class CollectionChannelListingError(ProductError):
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channels IDs which causes the error.",
-        required=False,
-    )
-
-
-class BulkProductError(ProductError):
-    index = graphene.Int(
-        description="Index of an input list item that caused the error."
-    )
-    warehouses = NonNullList(
-        graphene.ID,
-        description="List of warehouse IDs which causes the error.",
-        required=False,
-    )
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channel IDs which causes the error.",
-        required=False,
-    )
-
-
 class ShopError(Error):
     code = ShopErrorCode(description="The error code.", required=True)
-
-
-class ShippingError(Error):
-    code = ShippingErrorCode(description="The error code.", required=True)
-    warehouses = NonNullList(
-        graphene.ID,
-        description="List of warehouse IDs which causes the error.",
-        required=False,
-    )
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channels IDs which causes the error.",
-        required=False,
-    )
 
 
 class PageError(Error):
@@ -350,58 +168,12 @@ class PostError(Error):
     )
 
 
-class PaymentError(Error):
-    code = PaymentErrorCode(description="The error code.", required=True)
-    variants = NonNullList(
-        graphene.ID,
-        description="List of varint IDs which causes the error.",
-        required=False,
-    )
-
-
-class TransactionCreateError(Error):
-    code = TransactionCreateErrorCode(description="The error code.", required=True)
-
-
-class TransactionUpdateError(Error):
-    code = TransactionUpdateErrorCode(description="The error code.", required=True)
-
-
-class TransactionRequestActionError(Error):
-    code = TransactionRequestActionErrorCode(
-        description="The error code.", required=True
-    )
-
-
-class GiftCardError(Error):
-    code = GiftCardErrorCode(description="The error code.", required=True)
-    tags = NonNullList(
-        graphene.String,
-        description="List of tag values that cause the error.",
-        required=False,
-    )
-
-
 class PluginError(Error):
     code = PluginErrorCode(description="The error code.", required=True)
 
 
-class StockError(Error):
-    code = StockErrorCode(description="The error code.", required=True)
-
-
-class BulkStockError(ProductError):
-    index = graphene.Int(
-        description="Index of an input list item that caused the error."
-    )
-
-
 class UploadError(Error):
     code = UploadErrorCode(description="The error code.", required=True)
-
-
-class WarehouseError(Error):
-    code = WarehouseErrorCode(description="The error code.", required=True)
 
 
 class WebhookError(Error):
@@ -415,14 +187,6 @@ class TranslationError(Error):
 class SeoInput(graphene.InputObjectType):
     title = graphene.String(description="SEO title.")
     description = graphene.String(description="SEO description.")
-
-
-class Weight(graphene.ObjectType):
-    unit = WeightUnitsEnum(description="Weight unit.", required=True)
-    value = graphene.Float(description="Weight value.", required=True)
-
-    class Meta:
-        description = "Represents weight value in a specific weight unit."
 
 
 class Image(graphene.ObjectType):
@@ -448,16 +212,6 @@ class File(graphene.ObjectType):
         return info.context.build_absolute_uri(urljoin(settings.MEDIA_URL, root.url))
 
 
-class PriceInput(graphene.InputObjectType):
-    currency = graphene.String(description="Currency code.", required=True)
-    amount = PositiveDecimal(description="Amount of money.", required=True)
-
-
-class PriceRangeInput(graphene.InputObjectType):
-    gte = graphene.Float(description="Price greater than or equal to.", required=False)
-    lte = graphene.Float(description="Price less than or equal to.", required=False)
-
-
 class DateRangeInput(graphene.InputObjectType):
     gte = graphene.Date(description="Start date.", required=False)
     lte = graphene.Date(description="End date.", required=False)
@@ -476,15 +230,6 @@ class IntRangeInput(graphene.InputObjectType):
 class TimePeriodInputType(graphene.InputObjectType):
     amount = graphene.Int(description="The length of the period.", required=True)
     type = TimePeriodTypeEnum(description="The type of the period.", required=True)
-
-
-class TaxType(graphene.ObjectType):
-    """Representation of tax types fetched from tax gateway."""
-
-    description = graphene.String(description="Description of the tax type.")
-    tax_code = graphene.String(
-        description="External tax code used to identify given tax group."
-    )
 
 
 class Job(graphene.Interface):

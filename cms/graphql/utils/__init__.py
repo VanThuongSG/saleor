@@ -13,7 +13,7 @@ from graphql.error import GraphQLError
 from graphql.error import format_error as format_graphql_error
 
 from ..core.enums import PermissionEnum
-from ..core.types import TYPES_WITH_DOUBLE_ID_AVAILABLE, Permission
+from ..core.types import Permission
 from ..core.utils import from_global_id_or_error
 
 unhandled_errors_logger = logging.getLogger("cms.graphql.errors.unhandled")

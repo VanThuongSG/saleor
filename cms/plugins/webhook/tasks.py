@@ -24,7 +24,6 @@ from ...graphql.webhook.subscription_payload import (
     generate_payload_from_subscription,
     initialize_request,
 )
-from ...payment import PaymentError
 from ...site.models import Site
 from ...webhook import observability
 from ...webhook.event_types import (

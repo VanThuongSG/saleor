@@ -10,7 +10,6 @@ from ...channel import models
 from ...core.permissions import ChannelPermissions
 from ...core.tracing import traced_atomic_transaction
 from ...core.utils.date_time import convert_to_utc_date_time
-from ..account.enums import CountryCodeEnum
 from ..core.descriptions import ADDED_IN_31, ADDED_IN_35, PREVIEW_FEATURE
 from ..core.mutations import BaseMutation, ModelDeleteMutation, ModelMutation
 from ..core.types import ChannelError, ChannelErrorCode, NonNullList

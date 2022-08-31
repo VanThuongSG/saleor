@@ -12,17 +12,8 @@ from ..models import PluginConfiguration
 from . import SendgridConfiguration
 from .tasks import (
     send_account_confirmation_email_task,
-    send_account_delete_confirmation_email_task,
-    send_fulfillment_confirmation_email_task,
-    send_fulfillment_update_email_task,
-    send_gift_card_email_task,
-    send_invoice_email_task,
-    send_order_canceled_email_task,
-    send_order_confirmation_email_task,
-    send_order_confirmed_email_task,
-    send_order_refund_email_task,
-    send_password_reset_email_task,
-    send_payment_confirmation_email_task,
+    send_account_delete_confirmation_email_task,    
+    send_password_reset_email_task,    
     send_request_email_change_email_task,
     send_set_user_password_email_task,
     send_user_change_email_notification_task,
@@ -55,43 +46,7 @@ EVENT_MAP = {
     UserNotifyEvent.ACCOUNT_PASSWORD_RESET: (
         send_password_reset_email_task,
         "account_password_reset_template_id",
-    ),
-    UserNotifyEvent.INVOICE_READY: (
-        send_invoice_email_task,
-        "invoice_ready_template_id",
-    ),
-    UserNotifyEvent.ORDER_CONFIRMATION: (
-        send_order_confirmation_email_task,
-        "order_confirmation_template_id",
-    ),
-    UserNotifyEvent.ORDER_CONFIRMED: (
-        send_order_confirmed_email_task,
-        "order_confirmed_template_id",
-    ),
-    UserNotifyEvent.ORDER_FULFILLMENT_CONFIRMATION: (
-        send_fulfillment_confirmation_email_task,
-        "order_fulfillment_confirmation_template_id",
-    ),
-    UserNotifyEvent.ORDER_FULFILLMENT_UPDATE: (
-        send_fulfillment_update_email_task,
-        "order_fulfillment_update_template_id",
-    ),
-    UserNotifyEvent.ORDER_PAYMENT_CONFIRMATION: (
-        send_payment_confirmation_email_task,
-        "order_payment_confirmation_template_id",
-    ),
-    UserNotifyEvent.ORDER_CANCELED: (
-        send_order_canceled_email_task,
-        "order_canceled_template_id",
-    ),
-    UserNotifyEvent.ORDER_REFUND_CONFIRMATION: (
-        send_order_refund_email_task,
-        "order_refund_confirmation_template_id",
-    ),
-    UserNotifyEvent.SEND_GIFT_CARD: (
-        send_gift_card_email_task,
-        "send_gift_card_template_id",
-    ),
+    ),    
 }
 
 HELP_TEXT_TEMPLATE = "ID of the dynamic template in Sendgrid"
@@ -111,16 +66,7 @@ class SendgridEmailPlugin(BasePlugin):
         {"name": "account_delete_template_id", "value": None},
         {"name": "account_change_email_confirm_template_id", "value": None},
         {"name": "account_change_email_request_template_id", "value": None},
-        {"name": "account_password_reset_template_id", "value": None},
-        {"name": "invoice_ready_template_id", "value": None},
-        {"name": "order_confirmation_template_id", "value": None},
-        {"name": "order_confirmed_template_id", "value": None},
-        {"name": "order_fulfillment_confirmation_template_id", "value": None},
-        {"name": "order_fulfillment_update_template_id", "value": None},
-        {"name": "order_payment_confirmation_template_id", "value": None},
-        {"name": "order_canceled_template_id", "value": None},
-        {"name": "order_refund_confirmation_template_id", "value": None},
-        {"name": "send_gift_card_template_id", "value": None},
+        {"name": "account_password_reset_template_id", "value": None},        
         {"name": "api_key", "value": None},
     ]
     CONFIG_STRUCTURE = {

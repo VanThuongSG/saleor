@@ -11,12 +11,7 @@ from .bulk_mutations import (
     PostMediaBulkDelete
 )
 from .filters import PostFilterInput, PostTypeFilterInput
-from .mutations.attributes import (
-    PostAttributeAssign,
-    PostAttributeUnassign,
-    PostReorderAttributeValues,
-    PostTypeReorderAttributes,
-)
+
 from .mutations.posts import (
     PostCreate,
     PostDelete,
@@ -108,9 +103,3 @@ class PostMutations(graphene.ObjectType):
     post_type_update = PostTypeUpdate.Field()
     post_type_delete = PostTypeDelete.Field()
     post_type_bulk_delete = PostTypeBulkDelete.Field()
-
-    # attributes mutations
-    post_attribute_assign = PostAttributeAssign.Field()
-    post_attribute_unassign = PostAttributeUnassign.Field()
-    post_type_reorder_attributes = PostTypeReorderAttributes.Field()
-    post_reorder_attribute_values = PostReorderAttributeValues.Field()
