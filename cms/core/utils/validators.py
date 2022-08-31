@@ -5,12 +5,12 @@ import micawber
 from django.core.exceptions import ValidationError
 
 from ...account.models import User
-from ...product import ProductMediaTypes
-from ...product.error_codes import ProductErrorCode
+from ...post import PostMediaTypes
+from ...post.error_codes import PostErrorCode
 
 SUPPORTED_MEDIA_TYPES = {
-    "photo": ProductMediaTypes.IMAGE,
-    "video": ProductMediaTypes.VIDEO,
+    "photo": PostMediaTypes.IMAGE,
+    "video": PostMediaTypes.VIDEO,
 }
 MEDIA_MAX_WIDTH = 1920
 MEDIA_MAX_HEIGHT = 1080
@@ -30,7 +30,7 @@ def get_oembed_data(url: str, field_name: str) -> Tuple[Dict[str, Any], str]:
             {
                 field_name: ValidationError(
                     "Unsupported media provider or incorrect URL.",
-                    code=ProductErrorCode.UNSUPPORTED_MEDIA_PROVIDER.value,
+                    code=PostErrorCode.UNSUPPORTED_MEDIA_PROVIDER.value,
                 )
             }
         )

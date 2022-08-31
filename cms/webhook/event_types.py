@@ -218,22 +218,6 @@ class WebhookEventAsyncType:
     }
 
 
-class WebhookEventSyncType:
-
-    DISPLAY_LABELS = {
-    }
-
-    CHOICES = [
-    ]
-
-    ALL = [event[0] for event in CHOICES]
-
-    PAYMENT_EVENTS = [
-    ]
-
-    PERMISSIONS = {
-    }
-
 
 SUBSCRIBABLE_EVENTS = [
     WebhookEventAsyncType.ADDRESS_CREATED,

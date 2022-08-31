@@ -14,21 +14,17 @@ from ..enums import (
     LanguageCodeEnum,
     MenuErrorCode,
     MetadataErrorCode,
-    OrderSettingsErrorCode,
     PageErrorCode,
     PermissionEnum,
     PermissionGroupErrorCode,
     PostErrorCode,
     PluginErrorCode,
-    ShopErrorCode,
     ThumbnailFormatEnum,
     TimePeriodTypeEnum,
     TranslationErrorCode,
     UploadErrorCode,
     WebhookErrorCode,
 )
-from ..scalars import PositiveDecimal
-
 
 class NonNullList(graphene.List):
     """A list type that automatically adds non-null constraint on contained items."""
@@ -109,13 +105,8 @@ class ExternalNotificationError(Error):
         description="The error code.", required=True
     )
 
-
 class MenuError(Error):
     code = MenuErrorCode(description="The error code.", required=True)
-
-
-class OrderSettingsError(Error):
-    code = OrderSettingsErrorCode(description="The error code.", required=True)
 
 
 class MetadataError(Error):
@@ -134,10 +125,6 @@ class PermissionGroupError(Error):
         description="List of user IDs which causes the error.",
         required=False,
     )
-
-
-class ShopError(Error):
-    code = ShopErrorCode(description="The error code.", required=True)
 
 
 class PageError(Error):

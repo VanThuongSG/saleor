@@ -17,7 +17,6 @@ class PluginConfig(AppConfig):
         plugins = getattr(settings, "PLUGINS", [])
 
         for plugin_path in plugins:
-            print(plugin_path)
             self.load_and_check_plugin(plugin_path)
 
     def load_and_check_plugin(self, plugin_path: str):

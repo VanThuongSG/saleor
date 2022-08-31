@@ -3,7 +3,7 @@ from ...core.permissions import AppPermission
 from ...core.tracing import traced_resolver
 from ...webhook import models, payloads
 from ...webhook.deprecated_event_types import WebhookEventType
-from ...webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
+from ...webhook.event_types import WebhookEventAsyncType
 from ..core.utils import from_global_id_or_error
 from .types import Webhook, WebhookEvent
 
@@ -29,9 +29,7 @@ def resolve_webhook_events():
 @traced_resolver
 def resolve_sample_payload(info, event_name):
     app = info.context.app
-    required_permission = WebhookEventAsyncType.PERMISSIONS.get(
-        event_name, WebhookEventSyncType.PERMISSIONS.get(event_name)
-    )
+    required_permission = WebhookEventAsyncType.PERMISSIONS.get(event_name)
     if required_permission:
         if app and app.has_perm(required_permission):
             return payloads.generate_sample_payload(event_name)

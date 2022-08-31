@@ -5,7 +5,6 @@ from ..graphql.notifications.schema import ExternalNotificationMutations
 from .account.schema import AccountMutations, AccountQueries
 from .app.schema import AppMutations, AppQueries
 from .channel.schema import ChannelMutations, ChannelQueries
-from .core.enums import unit_enums
 from .core.federation.schema import build_federated_schema
 from .core.schema import CoreMutations, CoreQueries
 from .menu.schema import MenuMutations, MenuQueries
@@ -54,6 +53,6 @@ class Mutation(
 schema = build_federated_schema(
     Query,
     mutation=Mutation,
-    types=unit_enums + SUBSCRIPTION_EVENTS_TYPES,
+    types=SUBSCRIPTION_EVENTS_TYPES,
     subscription=Subscription,
 )

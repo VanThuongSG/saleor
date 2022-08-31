@@ -28,7 +28,6 @@ from ...core.permissions import (
 from ..utils import get_nodes, resolve_global_ids_to_primary_keys
 from .descriptions import DEPRECATED_IN_3X_FIELD
 from .types import (
-    TYPES_WITH_DOUBLE_ID_AVAILABLE,
     File,
     NonNullList,
     Upload,
@@ -183,18 +182,7 @@ class BaseMutation(graphene.Mutation):
         Whether by using the provided query set object or by calling type's get_node().
         """
         if qs is not None:
-            lookup = Q(pk=pk)
-            if pk is not None and str(graphene_type) in TYPES_WITH_DOUBLE_ID_AVAILABLE:
-                # This is temporary solution that allows fetching objects with use of
-                # new and old id.
-                try:
-                    UUID(str(pk))
-                except ValueError:
-                    lookup = (
-                        Q(number=pk) & Q(use_old_id=True)
-                        if str(graphene_type) == "Order"
-                        else Q(old_id=pk) & Q(old_id__isnull=False)
-                    )
+            lookup = Q(pk=pk)            
             return qs.filter(lookup).first()
         get_node = getattr(graphene_type, "get_node", None)
         if get_node:

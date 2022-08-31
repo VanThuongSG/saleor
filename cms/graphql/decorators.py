@@ -11,7 +11,7 @@ from ..core.permissions import (
     one_of_permissions_or_auth_filter_required,
 )
 from ..core.permissions import permission_required as core_permission_required
-from .utils import get_user_or_app_from_context
+# from .utils import get_user_or_app_from_context
 
 
 def context(f):

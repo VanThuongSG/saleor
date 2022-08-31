@@ -17,11 +17,9 @@ from typing import (
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
 from django.utils.functional import SimpleLazyObject
-from django_countries.fields import Country
 from graphene import Mutation
 from graphql import GraphQLError, ResolveInfo
 from graphql.execution import ExecutionResult
-from prices import Money, TaxedMoney
 from promise.promise import Promise
 
 from ..core.models import EventDelivery

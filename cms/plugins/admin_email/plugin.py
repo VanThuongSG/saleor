@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 def get_admin_event_map():
     return {
-        AdminNotifyEvent.STAFF_ORDER_CONFIRMATION: send_staff_order_confirmation,
         AdminNotifyEvent.ACCOUNT_SET_STAFF_PASSWORD: send_set_staff_password_email,
         AdminNotifyEvent.ACCOUNT_STAFF_RESET_PASSWORD: send_staff_reset_password,
     }

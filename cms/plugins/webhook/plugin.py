@@ -9,7 +9,7 @@ from ...core import EventDeliveryStatus
 from ...core.models import EventDelivery
 from ...core.notify_events import NotifyEventType
 from ...core.utils.json_serializer import CustomJsonEncoder
-from ...webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
+from ...webhook.event_types import WebhookEventAsyncType
 from ...webhook.payloads import (
     generate_customer_payload,
     generate_meta,
@@ -18,7 +18,7 @@ from ...webhook.payloads import (
     generate_requestor,
 )
 from ...webhook.utils import get_webhooks_for_event
-from ..base_plugin import BasePlugin, ExcludedShippingMethod
+from ..base_plugin import BasePlugin
 from .const import CACHE_EXCLUDED_SHIPPING_KEY
 from .tasks import (
     send_webhook_request_async,
@@ -45,10 +45,10 @@ class WebhookPlugin(BasePlugin):
     DEFAULT_ACTIVE = True
     CONFIGURATION_PER_CHANNEL = False
 
-    # @classmethod
-    # def check_plugin_id(cls, plugin_id: str) -> bool:
-    #     is_webhook_plugin = super().check_plugin_id(plugin_id)        
-    #     return is_webhook_plugin
+    @classmethod
+    def check_plugin_id(cls, plugin_id: str) -> bool:
+        is_webhook_plugin = super().check_plugin_id(plugin_id)        
+        return is_webhook_plugin
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -67,10 +67,6 @@ class WebhookPlugin(BasePlugin):
                 {
                     "id": graphene.Node.to_global_id("Address", address.id),
                     "city": address.city,
-                    "country": {
-                        "code": address.country.code,
-                        "name": address.country.name,
-                    },
                     "company_name": address.company_name,
                     "meta": self._generate_meta(),
                 }

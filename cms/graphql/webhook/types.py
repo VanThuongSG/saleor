@@ -5,7 +5,7 @@ import graphene
 from ...core import models as core_models
 from ...webhook import models
 from ...webhook.deprecated_event_types import WebhookEventType
-from ...webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
+from ...webhook.event_types import WebhookEventAsyncType
 from ..core.connection import (
     CountableConnection,
     create_connection_slice,
@@ -53,23 +53,6 @@ class WebhookEventAsync(ModelObjectType):
     def resolve_name(root: models.WebhookEvent, _info):
         return (
             WebhookEventAsyncType.DISPLAY_LABELS.get(root.event_type) or root.event_type
-        )
-
-
-class WebhookEventSync(ModelObjectType):
-    name = graphene.String(description="Display name of the event.", required=True)
-    event_type = enums.WebhookEventTypeSyncEnum(
-        description="Internal name of the event type.", required=True
-    )
-
-    class Meta:
-        model = models.WebhookEvent
-        description = "Synchronous webhook event."
-
-    @staticmethod
-    def resolve_name(root: models.WebhookEvent, _info):
-        return (
-            WebhookEventSyncType.DISPLAY_LABELS.get(root.event_type) or root.event_type
         )
 
 
@@ -155,11 +138,6 @@ class Webhook(ModelObjectType):
         ),
         required=True,
     )
-    sync_events = NonNullList(
-        WebhookEventSync,
-        description="List of synchronous webhook events.",
-        required=True,
-    )
     async_events = NonNullList(
         WebhookEventAsync,
         description="List of asynchronous webhook events.",
@@ -205,21 +183,6 @@ class Webhook(ModelObjectType):
             WebhookEventsByWebhookIdLoader(info.context)
             .load(root.id)
             .then(_filter_by_async_type)
-        )
-
-    @staticmethod
-    def resolve_sync_events(root: models.Webhook, info):
-        def _filter_by_sync_type(webhook_events: List[WebhookEvent]):
-            return filter(
-                lambda webhook_event: webhook_event.event_type
-                in WebhookEventSyncType.ALL,
-                webhook_events,
-            )
-
-        return (
-            WebhookEventsByWebhookIdLoader(info.context)
-            .load(root.id)
-            .then(_filter_by_sync_type)
         )
 
     @staticmethod

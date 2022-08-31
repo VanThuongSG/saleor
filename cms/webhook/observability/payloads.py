@@ -11,7 +11,6 @@ from graphene.utils.str_converters import to_camel_case as str_to_camel_case
 from graphql import get_operation_ast
 
 from .. import traced_payload_generator
-from ..event_types import WebhookEventSyncType
 from .exceptions import ApiCallTruncationError, EventDeliveryAttemptTruncationError
 from .obfuscation import (
     anonymize_event_payload,
@@ -220,7 +219,7 @@ def generate_event_delivery_attempt_payload(
             id=graphene.Node.to_global_id("EventDelivery", attempt.delivery.pk),
             status=attempt.delivery.status,
             event_type=attempt.delivery.event_type,
-            event_sync=attempt.delivery.event_type in WebhookEventSyncType.ALL,
+            event_sync=[],
             payload=EventDeliveryPayload(
                 content_length=len(attempt.delivery.payload.payload.encode("utf-8")),
                 body=TRUNC_PLACEHOLDER,

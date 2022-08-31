@@ -6,12 +6,6 @@ from ..core.utils import from_global_id_or_error
 from ..translations.mutations import PageTranslate
 from .bulk_mutations import PageBulkDelete, PageBulkPublish, PageTypeBulkDelete
 from .filters import PageFilterInput, PageTypeFilterInput
-from .mutations.attributes import (
-    PageAttributeAssign,
-    PageAttributeUnassign,
-    PageReorderAttributeValues,
-    PageTypeReorderAttributes,
-)
 from .mutations.pages import (
     PageCreate,
     PageDelete,
@@ -93,9 +87,3 @@ class PageMutations(graphene.ObjectType):
     page_type_update = PageTypeUpdate.Field()
     page_type_delete = PageTypeDelete.Field()
     page_type_bulk_delete = PageTypeBulkDelete.Field()
-
-    # attributes mutations
-    page_attribute_assign = PageAttributeAssign.Field()
-    page_attribute_unassign = PageAttributeUnassign.Field()
-    page_type_reorder_attributes = PageTypeReorderAttributes.Field()
-    page_reorder_attribute_values = PageReorderAttributeValues.Field()

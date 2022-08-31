@@ -3,10 +3,9 @@ from typing import TYPE_CHECKING, Optional
 
 from django.db.models import Q
 from django.db.models.expressions import Exists, OuterRef
-from prices import TaxedMoney
 
 from ..app.models import App
-from .event_types import WebhookEventAsyncType, WebhookEventSyncType
+from .event_types import WebhookEventAsyncType
 from .models import Webhook, WebhookEvent
 
 if TYPE_CHECKING:
@@ -18,9 +17,7 @@ def get_webhooks_for_event(
 ) -> "QuerySet[Webhook]":
     """Get active webhooks from the database for an event."""
     permissions = {}
-    required_permission = WebhookEventAsyncType.PERMISSIONS.get(
-        event_type, WebhookEventSyncType.PERMISSIONS.get(event_type)
-    )
+    required_permission = WebhookEventAsyncType.PERMISSIONS.get(event_type)
     if required_permission:
         app_label, codename = required_permission.value.split(".")
         permissions["permissions__content_type__app_label"] = app_label

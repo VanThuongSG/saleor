@@ -7,12 +7,10 @@ from ...channel import error_codes as channel_error_codes
 from ...core import JobStatus, TimePeriodType
 from ...core import error_codes as core_error_codes
 from ...core.permissions import get_permissions_enum_list
-
 from ...menu import error_codes as menu_error_codes
 from ...page import error_codes as page_error_codes
 from ...post import error_codes as post_error_codes
 from ...plugins import error_codes as plugin_error_codes
-from ...site import error_codes as site_error_codes
 from ...thumbnail import ThumbnailFormat
 from ...webhook import error_codes as webhook_error_codes
 from ..notifications import error_codes as external_notifications_error_codes
@@ -86,19 +84,13 @@ ExternalNotificationTriggerErrorCode = graphene.Enum.from_enum(
 )
 PluginErrorCode = graphene.Enum.from_enum(plugin_error_codes.PluginErrorCode)
 MenuErrorCode = graphene.Enum.from_enum(menu_error_codes.MenuErrorCode)
-OrderSettingsErrorCode = graphene.Enum.from_enum(
-    site_error_codes.OrderSettingsErrorCode
-)
-GiftCardSettingsErrorCode = graphene.Enum.from_enum(
-    site_error_codes.GiftCardSettingsErrorCode
-)
+
 MetadataErrorCode = graphene.Enum.from_enum(core_error_codes.MetadataErrorCode)
 PageErrorCode = graphene.Enum.from_enum(page_error_codes.PageErrorCode)
 PostErrorCode = graphene.Enum.from_enum(post_error_codes.PostErrorCode)
 PermissionGroupErrorCode = graphene.Enum.from_enum(
     account_error_codes.PermissionGroupErrorCode
 )
-ShopErrorCode = graphene.Enum.from_enum(core_error_codes.ShopErrorCode)
 UploadErrorCode = graphene.Enum.from_enum(core_error_codes.UploadErrorCode)
 WebhookErrorCode = graphene.Enum.from_enum(webhook_error_codes.WebhookErrorCode)
 TranslationErrorCode = graphene.Enum.from_enum(core_error_codes.TranslationErrorCode)

@@ -6,19 +6,12 @@ from ...core.permissions import AccountPermissions, OrderPermissions
 from ...graphql.channel.utils import validate_channel
 from ...graphql.core.enums import ExternalNotificationTriggerErrorCode
 from ...graphql.utils import resolve_global_ids_to_primary_keys
-from ...order.models import Order
-from ...order.notifications import get_custom_order_payload
 
 PAYLOAD_MAPPING_FOR_CUSTOM_NOTIFICATION = {
     "User": (
         User,
         get_user_custom_payload,
         AccountPermissions.MANAGE_USERS,
-    ),
-    "Order": (
-        Order,
-        get_custom_order_payload,
-        OrderPermissions.MANAGE_ORDERS,
     ),
 }
 

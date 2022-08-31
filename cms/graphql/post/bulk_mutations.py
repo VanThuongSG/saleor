@@ -2,8 +2,6 @@ import graphene
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from ...attribute import AttributeInputType
-from ...attribute import models as attribute_models
 from ...core.permissions import PostPermissions, PostTypePermissions
 from ...core.tracing import traced_atomic_transaction
 from ...post import models
@@ -33,15 +31,7 @@ class PostBulkDelete(ModelBulkDeleteMutation):
             pks = cls.get_global_ids_or_error(ids, only_type=Post, field="pk")
         except ValidationError as error:
             return 0, error
-        cls.delete_assigned_attribute_values(pks)
         return super().perform_mutation(_root, info, ids, **data)
-
-    @staticmethod
-    def delete_assigned_attribute_values(instance_pks):
-        attribute_models.AttributeValue.objects.filter(
-            postassignments__post_id__in=instance_pks,
-            attribute__input_type__in=AttributeInputType.TYPES_WITH_UNIQUE_VALUES,
-        ).delete()
 
 
 class PostBulkPublish(BaseBulkMutation):
@@ -89,7 +79,6 @@ class PostTypeBulkDelete(ModelBulkDeleteMutation):
             pks = cls.get_global_ids_or_error(ids, only_type=PostType, field="pk")
         except ValidationError as error:
             return 0, error
-        cls.delete_assigned_attribute_values(pks)
         return super().perform_mutation(_root, info, ids, **data)
 
     @classmethod
@@ -98,13 +87,6 @@ class PostTypeBulkDelete(ModelBulkDeleteMutation):
         queryset.delete()
         for pt in post_types:
             transaction.on_commit(lambda: info.context.plugins.post_type_deleted(pt))
-
-    @staticmethod
-    def delete_assigned_attribute_values(instance_pks):
-        attribute_models.AttributeValue.objects.filter(
-            postassignments__assignment__post_type_id__in=instance_pks,
-            attribute__input_type__in=AttributeInputType.TYPES_WITH_UNIQUE_VALUES,
-        ).delete()
 
 
 class PostMediaBulkDelete(ModelBulkDeleteMutation):

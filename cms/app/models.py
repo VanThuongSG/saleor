@@ -9,16 +9,14 @@ from cms.core.permissions.enums import BasePermissionEnum
 
 from ..core.models import Job, ModelWithMetadata
 from ..core.permissions import AppPermission
-from ..webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
+from ..webhook.event_types import WebhookEventAsyncType
 from .types import AppExtensionMount, AppExtensionTarget, AppType
 
 
 class AppQueryset(models.QuerySet):
     def for_event_type(self, event_type: str):
         permissions = {}
-        required_permission = WebhookEventAsyncType.PERMISSIONS.get(
-            event_type, WebhookEventSyncType.PERMISSIONS.get(event_type)
-        )
+        required_permission = WebhookEventAsyncType.PERMISSIONS.get(event_type)
         if required_permission:
             app_label, codename = required_permission.value.split(".")
             permissions["permissions__content_type__app_label"] = app_label

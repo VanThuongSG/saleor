@@ -14,7 +14,7 @@ from ..core.permissions import (
 )
 from ..graphql.core.utils import str_to_enum
 from ..graphql.webhook.subscription_payload import validate_subscription_query
-from ..webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
+from ..webhook.event_types import WebhookEventAsyncType
 from .error_codes import AppErrorCode
 from .types import AppExtensionMount, AppExtensionTarget
 from .validators import AppURLValidator
@@ -189,7 +189,7 @@ def clean_webhooks(manifest_data, errors):
         str_to_enum(e_type[0]): e_type[0] for e_type in WebhookEventAsyncType.CHOICES
     }
     sync_types = {
-        str_to_enum(e_type[0]): e_type[0] for e_type in WebhookEventSyncType.CHOICES
+        # str_to_enum(e_type[0]): e_type[0] for e_type in WebhookEventSyncType.CHOICES
     }
 
     target_url_validator = AppURLValidator(

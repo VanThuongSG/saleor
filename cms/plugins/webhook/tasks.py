@@ -29,7 +29,6 @@ from ...webhook import observability
 from ...webhook.event_types import (
     SUBSCRIBABLE_EVENTS,
     WebhookEventAsyncType,
-    WebhookEventSyncType,
 )
 from ...webhook.observability import WebhookData
 from ...webhook.utils import get_webhooks_for_event

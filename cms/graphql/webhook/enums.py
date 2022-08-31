@@ -1,6 +1,6 @@
 import graphene
 
-from ...webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
+from ...webhook.event_types import WebhookEventAsyncType
 from ..core.descriptions import ADDED_IN_36, PREVIEW_FEATURE
 from ..core.utils import str_to_enum
 
@@ -85,7 +85,7 @@ WebhookEventTypeEnum = graphene.Enum(
     "WebhookEventTypeEnum",
     [
         (str_to_enum(e_type[0]), e_type[0])
-        for e_type in (WebhookEventAsyncType.CHOICES + WebhookEventSyncType.CHOICES)
+        for e_type in WebhookEventAsyncType.CHOICES
     ],
     description=description,
 )
@@ -97,11 +97,6 @@ WebhookEventTypeAsyncEnum = graphene.Enum(
     description=description,
 )
 
-WebhookEventTypeSyncEnum = graphene.Enum(
-    "WebhookEventTypeSyncEnum",
-    [(str_to_enum(e_type[0]), e_type[0]) for e_type in WebhookEventSyncType.CHOICES],
-    description=description,
-)
 
 WebhookSampleEventTypeEnum = graphene.Enum(
     "WebhookSampleEventTypeEnum",

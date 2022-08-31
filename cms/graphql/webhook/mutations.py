@@ -26,10 +26,6 @@ class WebhookCreateInput(graphene.InputObjectType):
         enums.WebhookEventTypeAsyncEnum,
         description="The asynchronous events that webhook wants to subscribe.",
     )
-    sync_events = NonNullList(
-        enums.WebhookEventTypeSyncEnum,
-        description="The synchronous events that webhook wants to subscribe.",
-    )
     app = graphene.ID(
         required=False,
         description="ID of the app to which webhook belongs.",
@@ -140,11 +136,6 @@ class WebhookUpdateInput(graphene.InputObjectType):
     async_events = NonNullList(
         enums.WebhookEventTypeAsyncEnum,
         description="The asynchronous events that webhook wants to subscribe.",
-        required=False,
-    )
-    sync_events = NonNullList(
-        enums.WebhookEventTypeSyncEnum,
-        description="The synchronous events that webhook wants to subscribe.",
         required=False,
     )
     app = graphene.ID(

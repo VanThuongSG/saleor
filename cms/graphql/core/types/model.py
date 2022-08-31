@@ -3,8 +3,6 @@ from uuid import UUID
 from django.db.models import Model, Q
 from graphene.types.objecttype import ObjectType, ObjectTypeOptions
 
-from . import TYPES_WITH_DOUBLE_ID_AVAILABLE
-
 
 class ModelObjectOptions(ObjectTypeOptions):
     model = None
@@ -48,19 +46,7 @@ class ModelObjectType(ObjectType):
     @classmethod
     def get_node(cls, _, id):
         model = cls._meta.model
-        type_name = cls._meta.name
-        lookup = Q(pk=id)
-        if id is not None and type_name in TYPES_WITH_DOUBLE_ID_AVAILABLE:
-            # This is temporary solution that allows fetching orders with use of
-            # new (uuid type) and old (int type) id
-            try:
-                UUID(str(id))
-            except ValueError:
-                lookup = (
-                    Q(number=id) & Q(use_old_id=True)
-                    if type_name == "Order"
-                    else Q(old_id=id) & Q(old_id__isnull=False)
-                )
+        lookup = Q(pk=id)        
         try:
             return model.objects.get(lookup)
         except model.DoesNotExist:

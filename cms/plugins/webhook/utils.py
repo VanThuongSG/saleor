@@ -16,8 +16,6 @@ from ...core.models import (
     EventPayload,
 )
 
-from ...webhook.event_types import WebhookEventSyncType
-
 if TYPE_CHECKING:
     from .tasks import WebhookResponse
 

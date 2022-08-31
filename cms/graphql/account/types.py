@@ -26,7 +26,6 @@ from ..core.federation import federated_entity, resolve_federation_references
 from ..core.fields import ConnectionField, PermissionsField
 from ..core.scalars import UUID
 from ..core.types import (
-    CountryDisplay,
     Image,
     ModelObjectType,
     NonNullList,
@@ -69,65 +68,15 @@ class Address(ModelObjectType):
     city = graphene.String(required=True)
     city_area = graphene.String(required=True)
     postal_code = graphene.String(required=True)
-    country = graphene.Field(
-        CountryDisplay, required=True, description="Shop's default country."
-    )
     country_area = graphene.String(required=True)
     phone = graphene.String()
-    is_default_shipping_address = graphene.Boolean(
-        required=False, description="Address is user's default shipping address."
-    )
-    is_default_billing_address = graphene.Boolean(
-        required=False, description="Address is user's default billing address."
-    )
 
     class Meta:
         description = "Represents user address data."
         interfaces = [relay.Node]
         model = models.Address
 
-    @staticmethod
-    def resolve_country(root: models.Address, _info):
-        return CountryDisplay(code=root.country.code, country=root.country.name)
-
-    @staticmethod
-    def resolve_is_default_shipping_address(root: models.Address, _info):
-        """Look if the address is the default shipping address of the user.
-
-        This field is added through annotation when using the
-        `resolve_addresses` resolver. It's invalid for
-        `resolve_default_shipping_address` and
-        `resolve_default_billing_address`
-        """
-        if not hasattr(root, "user_default_shipping_address_pk"):
-            return None
-
-        user_default_shipping_address_pk = getattr(
-            root, "user_default_shipping_address_pk"
-        )
-        if user_default_shipping_address_pk == root.pk:
-            return True
-        return False
-
-    @staticmethod
-    def resolve_is_default_billing_address(root: models.Address, _info):
-        """Look if the address is the default billing address of the user.
-
-        This field is added through annotation when using the
-        `resolve_addresses` resolver. It's invalid for
-        `resolve_default_shipping_address` and
-        `resolve_default_billing_address`
-        """
-        if not hasattr(root, "user_default_billing_address_pk"):
-            return None
-
-        user_default_billing_address_pk = getattr(
-            root, "user_default_billing_address_pk"
-        )
-        if user_default_billing_address_pk == root.pk:
-            return True
-        return False
-
+    
     @staticmethod
     def __resolve_references(roots: List["Address"], info):
         from .resolvers import resolve_addresses
@@ -154,12 +103,6 @@ class CustomerEvent(ModelObjectType):
     app = graphene.Field(App, description="App that performed the action.")
     message = graphene.String(description="Content of the event.")
     count = graphene.Int(description="Number of objects concerned by the event.")
-    order = graphene.Field(
-        "cms.graphql.order.types.Order", description="The concerned order."
-    )
-    order_line = graphene.Field(
-        "cms.graphql.order.types.OrderLine", description="The concerned order line."
-    )
 
     class Meta:
         description = "History log of the customer."

@@ -6,11 +6,10 @@ from rx import Observable
 
 from ... import __version__
 from ...account.models import User
-from ...core.prices import quantize_price
 from ...menu.models import MenuItemTranslation
 from ...page.models import PageTranslation
 from ...post.models import PostTranslation
-from ...webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
+from ...webhook.event_types import WebhookEventAsyncType
 from ..account.types import User as UserType
 from ..app.types import App as AppType
 from ..channel import ChannelContext
@@ -22,8 +21,6 @@ from ..core.descriptions import (
     ADDED_IN_36,
     PREVIEW_FEATURE,
 )
-from ..core.scalars import PositiveDecimal
-from ..core.types import NonNullList
 from ..translations import types as translation_types
 
 TRANSLATIONS_TYPES_MAP = {
@@ -525,33 +522,6 @@ class PermissionGroupDeleted(ObjectType, PermissionGroupBase):
         )
 
 
-class ShippingPriceBase(AbstractType):
-    shipping_method = graphene.Field(
-        "cms.graphql.shipping.types.ShippingMethodType",
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-        description="The shipping method the event relates to.",
-    )
-    shipping_zone = graphene.Field(
-        "cms.graphql.shipping.types.ShippingZone",
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-        description="The shipping zone the shipping method belongs to.",
-    )
-
-    @staticmethod
-    def resolve_shipping_method(root, _info, channel=None):
-        _, shipping_method = root
-        return ChannelContext(node=shipping_method, channel_slug=channel)
-
-    @staticmethod
-    def resolve_shipping_zone(root, _info, channel=None):
-        _, shipping_method = root
-        return ChannelContext(node=shipping_method.shipping_zone, channel_slug=channel)
-
-
 class StaffCreated(ObjectType, UserBase):
     class Meta:
         interfaces = (Event,)
@@ -573,6 +543,48 @@ class StaffDeleted(ObjectType, UserBase):
         interfaces = (Event,)
         description = (
             "Event sent when staff user is deleted." + ADDED_IN_35 + PREVIEW_FEATURE
+        )
+
+
+class TranslationTypes(Union):
+    class Meta:
+        types = tuple(TRANSLATIONS_TYPES_MAP.values())
+
+    @classmethod
+    def resolve_type(cls, instance, info):
+        instance_type = type(instance)
+        if instance_type in TRANSLATIONS_TYPES_MAP:
+            return TRANSLATIONS_TYPES_MAP[instance_type]
+
+        return super(TranslationTypes, cls).resolve_type(instance, info)
+
+
+class TranslationBase(AbstractType):
+    translation = graphene.Field(
+        TranslationTypes, description="The translation the event relates to."
+    )
+
+    @staticmethod
+    def resolve_translation(root, _info):
+        _, translation = root
+        return translation
+
+
+class TranslationCreated(ObjectType, TranslationBase):
+    class Meta:
+        interfaces = (Event,)
+        description = (
+            "Event sent when new translation is created."
+            + ADDED_IN_32
+            + PREVIEW_FEATURE
+        )
+
+
+class TranslationUpdated(ObjectType, TranslationBase):
+    class Meta:
+        interfaces = (Event,)
+        description = (
+            "Event sent when translation is updated." + ADDED_IN_32 + PREVIEW_FEATURE
         )
 
 
@@ -625,4 +637,6 @@ SUBSCRIPTION_EVENTS_TYPES = [
     StaffCreated,
     StaffUpdated,
     StaffDeleted,    
+    TranslationCreated,
+    TranslationUpdated,
 ]
