@@ -18,15 +18,13 @@ from django.conf import settings
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse, HttpResponseNotFound
 from django.utils.module_loading import import_string
-from django_countries.fields import Country
 from graphene import Mutation
 from graphql import GraphQLError, ResolveInfo
 from graphql.execution import ExecutionResult
-from prices import Money, TaxedMoney
+from abc import ABC
 
 from ..channel.models import Channel
 from ..core.models import EventDelivery
-from ..core.payments import PaymentInterface
 from .base_plugin import ExternalAccessTokens
 from .models import PluginConfiguration
 
@@ -43,7 +41,8 @@ if TYPE_CHECKING:
 NotifyEventTypeChoice = str
 
 
-class PluginsManager(PaymentInterface):
+# class PluginsManager(PaymentInterface):
+class PluginsManager(ABC):
     """Base manager for handling plugins logic."""
 
     plugins_per_channel: Dict[str, List["BasePlugin"]] = {}
@@ -322,7 +321,6 @@ class PluginsManager(PaymentInterface):
         return self.__run_method_on_plugins(
             "channel_status_changed", default_value, channel
         )
-
     
     def menu_created(self, menu: "Menu"):
         default_value = None
@@ -353,7 +351,6 @@ class PluginsManager(PaymentInterface):
         return self.__run_method_on_plugins(
             "menu_item_deleted", default_value, menu_item
         )
-
     
     def staff_created(self, staff_user: "User"):
         default_value = None

@@ -54,12 +54,7 @@ class AddressQueryset(models.QuerySet):
 class Address(models.Model):
     first_name = models.CharField(max_length=256, blank=True)
     last_name = models.CharField(max_length=256, blank=True)
-    company_name = models.CharField(max_length=256, blank=True)
-    street_address_1 = models.CharField(max_length=256, blank=True)
-    street_address_2 = models.CharField(max_length=256, blank=True)
-    city = models.CharField(max_length=256, blank=True)
-    city_area = models.CharField(max_length=128, blank=True)
-    postal_code = models.CharField(max_length=20, blank=True)
+    country = CountryField()
     phone = PossiblePhoneNumberField(blank=True, default="", db_index=True)
 
     objects = models.Manager.from_queryset(AddressQueryset)()
@@ -70,8 +65,8 @@ class Address(models.Model):
             GinIndex(
                 name="address_search_gin",
                 # `opclasses` and `fields` should be the same length
-                fields=["first_name", "last_name", "city"],
-                opclasses=["gin_trgm_ops"] * 4,
+                fields=["first_name", "last_name", "country"],
+                opclasses=["gin_trgm_ops"] * 3,
             )
         ]
 
@@ -80,8 +75,6 @@ class Address(models.Model):
         return "%s %s" % (self.first_name, self.last_name)
 
     def __str__(self):
-        if self.company_name:
-            return "%s - %s" % (self.company_name, self.full_name)
         return self.full_name
 
     def __eq__(self, other):

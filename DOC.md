@@ -17,7 +17,9 @@ python manage.py runserver 0.0.0.0:8000
 python manage.py makemigrations
 
 pytest --reuse-db saleor/graphql/post/tests
-python manage.py get_graphql_schema > saleor/graphql/schema.graphql
+python manage.py get_graphql_schema > cms/graphql/schema.graphql
 ```
 
 CREATE EXTENSION pgcrypto;
+CREATE EXTENSION pg_trgm;
+CREATE EXTENSION btree_gin;

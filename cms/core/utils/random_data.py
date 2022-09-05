@@ -138,19 +138,10 @@ def create_post_image(post, placeholder_dir, image_name):
 def create_address(save=True, **kwargs):
     address = Address(
         first_name=fake.first_name(),
-        last_name=fake.last_name(),
-        street_address_1=fake.street_address(),
-        city=fake.city(),
+        last_name=fake.last_name(),        
         country=settings.DEFAULT_COUNTRY,
         **kwargs,
     )
-
-    if address.country == "US":
-        state = fake.state_abbr()
-        address.country_area = state
-        address.postal_code = fake.postalcode_in_state(state)
-    else:
-        address.postal_code = fake.postalcode()
 
     if save:
         address.save()
@@ -302,7 +293,7 @@ def create_channels():
 
 
 def add_address_to_admin(email):
-    address = create_address()
+    address = create_address()    
     user = User.objects.get(email=email)
     manager = get_plugins_manager()
     store_user_address(user, address, manager)

@@ -73,15 +73,8 @@ class AddressForm(forms.ModelForm):
 
     AUTOCOMPLETE_MAPPING = [
         ("first_name", "given-name"),
-        ("last_name", "family-name"),
-        ("company_name", "organization"),
-        ("street_address_1", "address-line1"),
-        ("street_address_2", "address-line2"),
-        ("city", "address-level2"),
-        ("postal_code", "postal-code"),
-        ("country_area", "address-level1"),
+        ("last_name", "family-name"),        
         ("country", "country"),
-        ("city_area", "address-level3"),
         ("phone", "tel"),
         ("email", "email"),
     ]
@@ -92,20 +85,9 @@ class AddressForm(forms.ModelForm):
         labels = {
             "first_name": "Given name",
             "last_name": "Family name",
-            "company_name": "Company or organization",
-            "street_address_1": "Address",
-            "street_address_2": "",
-            "city": "City",
-            "city_area": "District",
-            "postal_code": "Postal code",
-            "country": "Country",
-            "country_area": "State or province",
             "phone": "Phone number",
         }
-        placeholders = {
-            "street_address_1": "Street address, P.O. box, company name",
-            "street_address_2": "Apartment, suite, unit, building, floor, etc",
-        }
+        placeholders = {}
 
     phone = PossiblePhoneNumberFormField(required=False)
 
@@ -147,13 +129,7 @@ class AddressForm(forms.ModelForm):
 class CountryAwareAddressForm(AddressForm):
 
     I18N_MAPPING = [
-        ("name", ["first_name", "last_name"]),
-        ("street_address", ["street_address_1", "street_address_2"]),
-        ("city_area", ["city_area"]),
-        ("country_area", ["country_area"]),
-        ("company_name", ["company_name"]),
-        ("postal_code", ["postal_code"]),
-        ("city", ["city"]),
+        ("name", ["first_name", "last_name"]),        
         ("sorting_code", []),
         ("country_code", ["country"]),
     ]
@@ -181,12 +157,7 @@ class CountryAwareAddressForm(AddressForm):
 
     def validate_address(self, data):
         try:
-            data["country_code"] = data.get("country", "")
-            if data["street_address_1"] or data["street_address_2"]:
-                data["street_address"] = "%s\n%s" % (
-                    data["street_address_1"],
-                    data["street_address_2"],
-                )
+            data["country_code"] = data.get("country", "")            
             normalized_data = i18naddress.normalize_address(data)
             if getattr(self, "enable_normalization", True):
                 data = normalized_data
@@ -241,11 +212,7 @@ def update_base_fields(form_class, i18n_rules):
             choices=i18n_rules.country_area_choices, required=required
         )
 
-    labels_map = {
-        "country_area": i18n_rules.country_area_type,
-        "postal_code": i18n_rules.postal_code_type,
-        "city_area": i18n_rules.city_area_type,
-    }
+    labels_map = {}
 
     for field_name, area_type in labels_map.items():
         field = form_class.base_fields[field_name]

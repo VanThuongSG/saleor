@@ -62,8 +62,7 @@ COST_MAP = {
         "appsInstallations": {"complexity": 1},        
         "channel": {"complexity": 1},
         "channels": {"complexity": 1},        
-        "customers": {"complexity": 1, "multipliers": ["first", "last"]},        
-        "homepageEvents": {"complexity": 1, "multipliers": ["first", "last"]},
+        "customers": {"complexity": 1, "multipliers": ["first", "last"]},
         "me": {"complexity": 1},
         "menu": {"complexity": 1},
         "menuItem": {"complexity": 1},
@@ -100,9 +99,7 @@ COST_MAP = {
         "items": {"complexity": 1},
     },
     "MenuItem": {
-        "category": {"complexity": 1},
         "children": {"complexity": 1},
-        "collection": {"complexity": 1},
         "menu": {"complexity": 1},
         "page": {"complexity": 1},
         "parent": {"complexity": 1},
@@ -116,9 +113,6 @@ COST_MAP = {
         "postType": {"complexity": 1},
     },
     "PostType": {
-    },    
-    "PostImage": {
-        "url": {"complexity": 1},
     },
     "PostMedia": {
         "url": {"complexity": 1},

@@ -109,52 +109,7 @@ class SendgridEmailPlugin(BasePlugin):
             "type": ConfigurationTypeField.STRING,
             "help_text": HELP_TEXT_TEMPLATE,
             "label": "Account password reset email template",
-        },
-        "invoice_ready_template_id": {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": HELP_TEXT_TEMPLATE,
-            "label": "Invoice ready email template",
-        },
-        "order_confirmation_template_id": {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": HELP_TEXT_TEMPLATE,
-            "label": "Order confirmation email template",
-        },
-        "order_confirmed_template_id": {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": "The dynamic template ID for order confirmed.",
-            "label": "Order confirmed email template",
-        },
-        "order_fulfillment_confirmation_template_id": {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": HELP_TEXT_TEMPLATE,
-            "label": "Order fulfillment confirmation email template",
-        },
-        "order_fulfillment_update_template_id": {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": HELP_TEXT_TEMPLATE,
-            "label": "Order fulfillment update email template",
-        },
-        "order_payment_confirmation_template_id": {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": HELP_TEXT_TEMPLATE,
-            "label": "Order payment confirmation email template",
-        },
-        "order_canceled_template_id": {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": HELP_TEXT_TEMPLATE,
-            "label": "Order canceled email template",
-        },
-        "order_refund_confirmation_template_id": {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": HELP_TEXT_TEMPLATE,
-            "label": "Order refund confirmation email template",
-        },
-        "send_gift_card_template_id": {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": HELP_TEXT_TEMPLATE,
-            "label": "Send gift card email template",
-        },
+        },        
         "api_key": {
             "type": ConfigurationTypeField.SECRET,
             "help_text": "Your Sendgrid API key.",

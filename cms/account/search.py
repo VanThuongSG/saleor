@@ -12,10 +12,6 @@ USER_SEARCH_FIELDS = ["email", "first_name", "last_name"]
 ADDRESS_SEARCH_FIELDS = [
     "first_name",
     "last_name",
-    "street_address_1",
-    "street_address_2",
-    "city",
-    "postal_code",
     "country",
     "phone",
 ]
@@ -69,36 +65,10 @@ def generate_address_search_vector_value(
         NoValidationSearchVector(
             Value(address.first_name),
             Value(address.last_name),
-            Value(address.street_address_1),
             Value(address.country.name),
-            Value(address.country.code),
             weight=weight,
         )
     ]
-    if address.company_name:
-        search_vectors.append(
-            NoValidationSearchVector(Value(address.company_name), weight=weight)
-        )
-    if address.country_area:
-        search_vectors.append(
-            NoValidationSearchVector(Value(address.country_area), weight=weight)
-        )
-    if address.city:
-        search_vectors.append(
-            NoValidationSearchVector(Value(address.city), weight=weight)
-        )
-    if address.city_area:
-        search_vectors.append(
-            NoValidationSearchVector(Value(address.city_area), weight=weight)
-        )
-    if address.street_address_2:
-        search_vectors.append(
-            NoValidationSearchVector(Value(address.street_address_2), weight=weight)
-        )
-    if address.postal_code:
-        search_vectors.append(
-            NoValidationSearchVector(Value(address.postal_code), weight=weight)
-        )
     if address.phone:
         search_vectors.append(
             NoValidationSearchVector(Value(address.phone.as_e164), weight=weight)
