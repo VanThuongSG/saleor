@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from ...channel.models import Channel
     from ...menu.models import Menu, MenuItem
     from ...page.models import Page, PageType
-    from ...post.models import Post, PostType
+    from ...post.models import Category, Post, PostType
 
 
 logger = logging.getLogger(__name__)
@@ -121,6 +121,33 @@ class WebhookPlugin(BasePlugin):
         if not self.active:
             return previous_value
         self._trigger_app_event(WebhookEventAsyncType.APP_STATUS_CHANGED, app)
+
+    def __trigger_category_event(self, event_type, category):
+        if webhooks := get_webhooks_for_event(event_type):
+            payload = self._serialize_payload(
+                {
+                    "id": graphene.Node.to_global_id("Category", category.id),
+                    "meta": self._generate_meta(),
+                }
+            )
+            trigger_webhooks_async(
+                payload, event_type, webhooks, category, self.requestor
+            )
+
+    def category_created(self, category: "Category", previous_value: None) -> None:
+        if not self.active:
+            return previous_value
+        self.__trigger_category_event(WebhookEventAsyncType.CATEGORY_CREATED, category)
+
+    def category_updated(self, category: "Category", previous_value: None) -> None:
+        if not self.active:
+            return previous_value
+        self.__trigger_category_event(WebhookEventAsyncType.CATEGORY_UPDATED, category)
+
+    def category_deleted(self, category: "Category", previous_value: None) -> None:
+        if not self.active:
+            return previous_value
+        self.__trigger_category_event(WebhookEventAsyncType.CATEGORY_DELETED, category)
     
     def __trigger_channel_event(self, event_type, channel):
         if webhooks := get_webhooks_for_event(event_type):

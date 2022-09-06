@@ -12,9 +12,12 @@ from django.db import transaction
 from ....core.permissions import PostPermissions, PostTypePermissions
 from ....core.tasks import delete_post_media_task
 from ....core.tracing import traced_atomic_transaction
+from ....core.utils.editorjs import clean_editor_js
 from ....core.utils.validators import get_oembed_data
 from ....post import PostMediaTypes, models
 from ....post.error_codes import PostErrorCode
+from ....post.utils import delete_categories
+from ....thumbnail import models as thumbnail_models
 from ...core.descriptions import ADDED_IN_33, DEPRECATED_IN_3X_INPUT, RICH_CONTENT
 from ...core.fields import JSONString
 from ...core.mutations import ModelDeleteMutation, ModelMutation, BaseMutation
@@ -29,12 +32,133 @@ from ...core.utils import (
     validate_image_url,
 )
 from ...utils.validators import check_for_duplicates
-from ..types import Post, PostType, PostMedia
+from ..types import Post, PostType, PostMedia, Category
 from ..utils import update_ordered_media
 
 
+class CategoryInput(graphene.InputObjectType):
+    description = JSONString(description="Category description." + RICH_CONTENT)
+    name = graphene.String(description="Category name.")
+    slug = graphene.String(description="Category slug.")
+    seo = SeoInput(description="Search engine optimization fields.")
+    background_image = Upload(description="Background image file.")
+    background_image_alt = graphene.String(description="Alt text for a post media.")
+
+
+class CategoryCreate(ModelMutation):
+    class Arguments:
+        input = CategoryInput(
+            required=True, description="Fields required to create a category."
+        )
+        parent_id = graphene.ID(
+            description=(
+                "ID of the parent category. If empty, category will be top level "
+                "category."
+            ),
+            name="parent",
+        )
+
+    class Meta:
+        description = "Creates a new category."
+        model = models.Category
+        object_type = Category
+        permissions = (PostPermissions.MANAGE_POSTS,)
+        error_type_class = PostError
+        error_type_field = "post_errors"
+
+    @classmethod
+    def clean_input(cls, info, instance, data):
+        cleaned_input = super().clean_input(info, instance, data)
+        description = cleaned_input.get("description")
+        cleaned_input["description_plaintext"] = (
+            clean_editor_js(description, to_string=True) if description else ""
+        )
+        try:
+            cleaned_input = validate_slug_and_generate_if_needed(
+                instance, "name", cleaned_input
+            )
+        except ValidationError as error:
+            error.code = PostErrorCode.REQUIRED.value
+            raise ValidationError({"slug": error})
+        parent_id = data["parent_id"]
+        if parent_id:
+            parent = cls.get_node_or_error(
+                info, parent_id, field="parent", only_type=Category
+            )
+            cleaned_input["parent"] = parent
+        if data.get("background_image"):
+            image_data = info.context.FILES.get(data["background_image"])
+            validate_image_file(image_data, "background_image", PostErrorCode)
+            add_hash_to_file_name(image_data)
+        clean_seo_fields(cleaned_input)
+        return cleaned_input
+
+    @classmethod
+    def perform_mutation(cls, root, info, **data):
+        parent_id = data.pop("parent_id", None)
+        data["input"]["parent_id"] = parent_id
+        return super().perform_mutation(root, info, **data)
+
+    @classmethod
+    def post_save_action(cls, info, instance, _cleaned_input):
+        info.context.plugins.category_created(instance)
+
+
+class CategoryUpdate(CategoryCreate):
+    class Arguments:
+        id = graphene.ID(required=True, description="ID of a category to update.")
+        input = CategoryInput(
+            required=True, description="Fields required to update a category."
+        )
+
+    class Meta:
+        description = "Updates a category."
+        model = models.Category
+        object_type = Category
+        permissions = (PostPermissions.MANAGE_POSTS,)
+        error_type_class = PostError
+        error_type_field = "post_errors"
+
+    @classmethod
+    def construct_instance(cls, instance, cleaned_data):
+        # delete old background image and related thumbnails
+        if "background_image" in cleaned_data and instance.background_image:
+            instance.background_image.delete()
+            thumbnail_models.Thumbnail.objects.filter(category_id=instance.id).delete()
+        return super().construct_instance(instance, cleaned_data)
+
+    @classmethod
+    def post_save_action(cls, info, instance, _cleaned_input):
+        info.context.plugins.category_updated(instance)
+
+
+class CategoryDelete(ModelDeleteMutation):
+    class Arguments:
+        id = graphene.ID(required=True, description="ID of a category to delete.")
+
+    class Meta:
+        description = "Deletes a category."
+        model = models.Category
+        object_type = Category
+        permissions = (PostPermissions.MANAGE_POSTS,)
+        error_type_class = PostError
+        error_type_field = "post_errors"
+
+    @classmethod
+    def perform_mutation(cls, _root, info, **data):
+        node_id = data.get("id")
+        instance = cls.get_node_or_error(info, node_id, only_type=Category)
+
+        db_id = instance.id
+
+        delete_categories([db_id], manager=info.context.plugins)
+
+        instance.id = db_id
+        return cls.success_response(instance)
+
 
 class PostInput(graphene.InputObjectType):
+    category = graphene.ID(description="ID of the product's category.", name="category")
     slug = graphene.String(description="Post internal name.")
     title = graphene.String(description="Post title.")
     content = JSONString(description="Post content." + RICH_CONTENT)

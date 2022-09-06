@@ -1,17 +1,28 @@
 from typing import List
 
 import graphene
+from graphene import relay
 
-from ...core.permissions import PostPermissions
+from ...core.permissions import (
+    PostPermissions,
+    has_one_of_permissions,
+)
 from ...core.tracing import traced_resolver
 from ...post import models
+from ...post.models import ALL_POSTS_PERMISSIONS
 from ...thumbnail.utils import get_image_or_proxy_url, get_thumbnail_size
 from ..core.connection import (
     CountableConnection,
+    create_connection_slice,
 )
 from ..core.descriptions import ADDED_IN_33, DEPRECATED_IN_3X_FIELD, RICH_CONTENT
 from ..core.federation import federated_entity, resolve_federation_references
-from ..core.fields import FilterConnectionField, JSONString, PermissionsField
+from ..core.fields import (
+    ConnectionField,
+    FilterConnectionField,
+    JSONString,
+    PermissionsField,
+)
 from ..core.types import (
     Image,
     ModelObjectType,
@@ -22,11 +33,15 @@ from ..core.utils import from_global_id_or_error
 from ..meta.types import ObjectWithMetadata
 from ..translations.fields import TranslationField
 from ..translations.types import PostTranslation
+from ..utils import get_user_or_app_from_context
 from .dataloaders import (
+    CategoryByIdLoader,
+    CategoryChildrenByCategoryIdLoader,
     ImagesByPostIdLoader,
     PostsByPostTypeIdLoader,
     PostTypeByIdLoader,
     MediaByPostIdLoader,
+    ThumbnailByCategoryIdSizeAndFormatLoader,
     ThumbnailByPostMediaIdSizeAndFormatLoader,
 )
 from .enums import PostMediaType
@@ -92,6 +107,7 @@ class Post(ModelObjectType):
     is_published = graphene.Boolean(required=True)
     slug = graphene.String(required=True)
     post_type = graphene.Field(PostType, required=True)
+    category = graphene.Field(lambda: Category)
     created = graphene.DateTime(required=True)
     content_json = JSONString(
         description="Content of the post." + RICH_CONTENT,
@@ -298,3 +314,119 @@ class PostImage(graphene.ObjectType):
             .load((root.id, size, format))
             .then(_resolve_url)
         )
+
+
+@federated_entity("id")
+class Category(ModelObjectType):
+    id = graphene.GlobalID(required=True)
+    seo_title = graphene.String()
+    seo_description = graphene.String()
+    name = graphene.String(required=True)
+    description = JSONString(description="Description of the category." + RICH_CONTENT)
+    slug = graphene.String(required=True)
+    parent = graphene.Field(lambda: Category)
+    level = graphene.Int(required=True)
+    description_json = JSONString(
+        description="Description of the category." + RICH_CONTENT,
+        deprecation_reason=(
+            f"{DEPRECATED_IN_3X_FIELD} Use the `description` field instead."
+        ),
+    )
+    ancestors = ConnectionField(
+        lambda: CategoryCountableConnection,
+        description="List of ancestors of the category.",
+    )
+    posts = ConnectionField(
+        PostCountableConnection,
+        # channel=graphene.String(
+        #     description="Slug of a channel for which the data should be returned."
+        # ),
+        description=(
+            "List of posts in the category. Requires the following permissions to "
+            "include the unpublished items: "
+            f"{', '.join([p.name for p in ALL_POSTS_PERMISSIONS])}."
+        ),
+    )
+    children = ConnectionField(
+        lambda: CategoryCountableConnection,
+        description="List of children of the category.",
+    )
+    background_image = ThumbnailField()
+    # translation = TranslationField(CategoryTranslation, type_name="category")
+
+    class Meta:
+        description = (
+            "Represents a single category of posts. Categories allow to organize "
+            "posts in a tree-hierarchies which can be used for navigation in the "
+            "storefront."
+        )
+        interfaces = [relay.Node, ObjectWithMetadata]
+        model = models.Category
+
+    @staticmethod
+    def resolve_ancestors(root: models.Category, info, **kwargs):
+        return create_connection_slice(
+            root.get_ancestors(), info, kwargs, CategoryCountableConnection
+        )
+
+    @staticmethod
+    def resolve_description_json(root: models.Category, _info):
+        description = root.description
+        return description if description is not None else {}
+
+    @staticmethod
+    def resolve_background_image(root: models.Category, info, size=None, format=None):
+        if not root.background_image:
+            return
+
+        alt = root.background_image_alt
+        if not size:
+            return Image(url=root.background_image.url, alt=alt)
+
+        format = format.lower() if format else None
+        size = get_thumbnail_size(size)
+
+        def _resolve_background_image(thumbnail):
+            url = get_image_or_proxy_url(thumbnail, root.id, "Category", size, format)
+            return Image(url=url, alt=alt)
+
+        return (
+            ThumbnailByCategoryIdSizeAndFormatLoader(info.context)
+            .load((root.id, size, format))
+            .then(_resolve_background_image)
+        )
+
+    @staticmethod
+    def resolve_children(root: models.Category, info, **kwargs):
+        def slice_children_categories(children):
+            return create_connection_slice(
+                children, info, kwargs, CategoryCountableConnection
+            )
+
+        return (
+            CategoryChildrenByCategoryIdLoader(info.context)
+            .load(root.pk)
+            .then(slice_children_categories)
+        )
+
+    @staticmethod
+    def resolve_url(root: models.Category, _info):
+        return ""
+
+    @staticmethod
+    @traced_resolver
+    def resolve_posts(root: models.Category, info, *, channel=None, **kwargs):
+        requestor = get_user_or_app_from_context(info.context)
+        tree = root.get_descendants(include_self=True)
+        qs.visible_to_user(requestor)
+        qs = qs.filter(category__in=tree)
+        return create_connection_slice(qs, info, kwargs, PostCountableConnection)
+
+    @staticmethod
+    def __resolve_references(roots: List["Category"], _info):
+        return resolve_federation_references(Category, roots, models.Category.objects)
+
+
+class CategoryCountableConnection(CountableConnection):
+    class Meta:
+        node = Category

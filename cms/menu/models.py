@@ -6,6 +6,7 @@ from ..core.models import ModelWithMetadata, SortableModel
 from ..core.permissions import MenuPermissions
 from ..core.utils.translations import Translation, TranslationProxy
 from ..page.models import Page
+from ..post.models import Category
 
 
 class Menu(ModelWithMetadata):
@@ -29,6 +30,9 @@ class MenuItem(ModelWithMetadata, MPTTModel, SortableModel):
 
     # not mandatory fields, usage depends on what type of link is stored
     url = models.URLField(max_length=256, blank=True, null=True)
+    category = models.ForeignKey(
+        Category, blank=True, null=True, on_delete=models.CASCADE
+    )
     page = models.ForeignKey(Page, blank=True, null=True, on_delete=models.CASCADE)
 
     objects = models.Manager()
@@ -51,7 +55,7 @@ class MenuItem(ModelWithMetadata, MPTTModel, SortableModel):
 
     @property
     def linked_object(self):
-        return self.category or self.collection or self.page
+        return self.category or self.page
 
 
 class MenuItemTranslation(Translation):

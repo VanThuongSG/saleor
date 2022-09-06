@@ -63,6 +63,9 @@ class Event(graphene.Interface):
             WebhookEventAsyncType.APP_UPDATED: AppUpdated,
             WebhookEventAsyncType.APP_DELETED: AppDeleted,
             WebhookEventAsyncType.APP_STATUS_CHANGED: AppStatusChanged,
+            WebhookEventAsyncType.CATEGORY_CREATED: CategoryCreated,
+            WebhookEventAsyncType.CATEGORY_UPDATED: CategoryUpdated,
+            WebhookEventAsyncType.CATEGORY_DELETED: CategoryDeleted,
             WebhookEventAsyncType.CHANNEL_CREATED: ChannelCreated,
             WebhookEventAsyncType.CHANNEL_UPDATED: ChannelUpdated,
             WebhookEventAsyncType.CHANNEL_DELETED: ChannelDeleted,
@@ -193,6 +196,42 @@ class AppStatusChanged(ObjectType, AppBase):
         interfaces = (Event,)
         description = (
             "Event sent when app status has changed." + ADDED_IN_34 + PREVIEW_FEATURE
+        )
+
+
+class CategoryBase(AbstractType):
+    category = graphene.Field(
+        "cms.graphql.post.types.Category",
+        description="The category the event relates to.",
+    )
+
+    @staticmethod
+    def resolve_category(root, info):
+        _, category = root
+        return category
+
+
+class CategoryCreated(ObjectType, CategoryBase):
+    class Meta:
+        interfaces = (Event,)
+        description = (
+            "Event sent when new category is created." + ADDED_IN_32 + PREVIEW_FEATURE
+        )
+
+
+class CategoryUpdated(ObjectType, CategoryBase):
+    class Meta:
+        interfaces = (Event,)
+        description = (
+            "Event sent when category is updated." + ADDED_IN_32 + PREVIEW_FEATURE
+        )
+
+
+class CategoryDeleted(ObjectType, CategoryBase):
+    class Meta:
+        interfaces = (Event,)
+        description = (
+            "Event sent when category is deleted." + ADDED_IN_32 + PREVIEW_FEATURE
         )
 
 
@@ -606,7 +645,10 @@ SUBSCRIPTION_EVENTS_TYPES = [
     AppInstalled,
     AppUpdated,
     AppDeleted,
-    AppStatusChanged,   
+    AppStatusChanged,
+    CategoryCreated,
+    CategoryUpdated,
+    CategoryDeleted, 
     ChannelCreated,
     ChannelUpdated,
     ChannelDeleted,

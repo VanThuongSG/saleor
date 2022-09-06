@@ -24,6 +24,10 @@ class WebhookEventAsyncType:
     APP_DELETED = "app_deleted"
     APP_STATUS_CHANGED = "app_status_changed"
 
+    CATEGORY_CREATED = "category_created"
+    CATEGORY_UPDATED = "category_updated"
+    CATEGORY_DELETED = "category_deleted"
+
     CHANNEL_CREATED = "channel_created"
     CHANNEL_UPDATED = "channel_updated"
     CHANNEL_DELETED = "channel_deleted"
@@ -81,7 +85,10 @@ class WebhookEventAsyncType:
         APP_INSTALLED: "App created",
         APP_UPDATED: "App updated",
         APP_DELETED: "App deleted",
-        APP_STATUS_CHANGED: "App status changed",        
+        APP_STATUS_CHANGED: "App status changed",
+        CATEGORY_CREATED: "Category created",
+        CATEGORY_UPDATED: "Category updated",
+        CATEGORY_DELETED: "Category deleted",    
         CHANNEL_CREATED: "Channel created",
         CHANNEL_UPDATED: "Channel updated",
         CHANNEL_DELETED: "Channel deleted",
@@ -130,6 +137,9 @@ class WebhookEventAsyncType:
         (APP_UPDATED, DISPLAY_LABELS[APP_UPDATED]),
         (APP_DELETED, DISPLAY_LABELS[APP_DELETED]),
         (APP_STATUS_CHANGED, DISPLAY_LABELS[APP_STATUS_CHANGED]),
+        (CATEGORY_CREATED, DISPLAY_LABELS[CATEGORY_CREATED]),
+        (CATEGORY_UPDATED, DISPLAY_LABELS[CATEGORY_UPDATED]),
+        (CATEGORY_DELETED, DISPLAY_LABELS[CATEGORY_DELETED]),
         (CHANNEL_CREATED, DISPLAY_LABELS[CHANNEL_CREATED]),
         (CHANNEL_UPDATED, DISPLAY_LABELS[CHANNEL_UPDATED]),
         (CHANNEL_DELETED, DISPLAY_LABELS[CHANNEL_DELETED]),
@@ -177,7 +187,9 @@ class WebhookEventAsyncType:
         APP_UPDATED: AppPermission.MANAGE_APPS,
         APP_DELETED: AppPermission.MANAGE_APPS,
         APP_STATUS_CHANGED: AppPermission.MANAGE_APPS,
-        
+        CATEGORY_CREATED: PostPermissions.MANAGE_POSTS,
+        CATEGORY_UPDATED: PostPermissions.MANAGE_POSTS,
+        CATEGORY_DELETED: PostPermissions.MANAGE_POSTS,        
         CHANNEL_CREATED: ChannelPermissions.MANAGE_CHANNELS,
         CHANNEL_UPDATED: ChannelPermissions.MANAGE_CHANNELS,
         CHANNEL_DELETED: ChannelPermissions.MANAGE_CHANNELS,
@@ -218,7 +230,6 @@ class WebhookEventAsyncType:
     }
 
 
-
 SUBSCRIBABLE_EVENTS = [
     WebhookEventAsyncType.ADDRESS_CREATED,
     WebhookEventAsyncType.ADDRESS_UPDATED,
@@ -227,6 +238,9 @@ SUBSCRIBABLE_EVENTS = [
     WebhookEventAsyncType.APP_UPDATED,
     WebhookEventAsyncType.APP_DELETED,
     WebhookEventAsyncType.APP_STATUS_CHANGED,
+    WebhookEventAsyncType.CATEGORY_CREATED,
+    WebhookEventAsyncType.CATEGORY_UPDATED,
+    WebhookEventAsyncType.CATEGORY_DELETED,
     WebhookEventAsyncType.CHANNEL_CREATED,
     WebhookEventAsyncType.CHANNEL_UPDATED,
     WebhookEventAsyncType.CHANNEL_DELETED,

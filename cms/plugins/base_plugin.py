@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from ..core.notify_events import NotifyEventType
     from ..menu.models import Menu, MenuItem
     from ..page.models import Page, PageType
-    from ..post.models import Post, PostType
+    from ..post.models import Category, Post, PostType
 
 PluginConfigurationType = List[dict]
 NoneType = type(None)
@@ -166,6 +166,23 @@ class BasePlugin:
         [WSGIRequest, Optional["User"]], Union["User", NoneType]
     ]
 
+    #  Trigger when category is created.
+    #
+    #  Overwrite this method if you need to trigger specific logic after a category is
+    #  created.
+    category_created: Callable[["Category", None], None]
+
+    #  Trigger when category is deleted.
+    #
+    #  Overwrite this method if you need to trigger specific logic after a category is
+    #  deleted.
+    category_deleted: Callable[["Category", None], None]
+
+    #  Trigger when category is updated.
+    #
+    #  Overwrite this method if you need to trigger specific logic after a category is
+    #  updated.
+    category_updated: Callable[["Category", None], None]
     
     #  Trigger when channel is created.
     #

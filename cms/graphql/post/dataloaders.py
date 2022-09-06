@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from ...post import PostMediaTypes
-from ...post.models import Post, PostType, PostMedia
+from ...post.models import Post, PostType, PostMedia, Category
 from ...thumbnail.models import Thumbnail
 from ..core.dataloaders import DataLoader
 
@@ -88,6 +88,33 @@ class BaseThumbnailBySizeAndFormatLoader(DataLoader):
         return [thumbnails_by_instance_id_size_and_format_map.get(key) for key in keys]
 
 
+class CategoryByIdLoader(DataLoader):
+    context_key = "category_by_id"
+
+    def batch_load(self, keys):
+        categories = Category.objects.using(self.database_connection_name).in_bulk(keys)
+        return [categories.get(category_id) for category_id in keys]
+
+
+class CategoryChildrenByCategoryIdLoader(DataLoader):
+    context_key = "categorychildren_by_category"
+
+    def batch_load(self, keys):
+        categories = Category.objects.using(self.database_connection_name).filter(
+            parent__isnull=False
+        )
+        parent_to_children_mapping = defaultdict(list)
+        for category in categories.iterator():
+            parent_to_children_mapping[category.parent_id].append(category)
+
+        return [parent_to_children_mapping.get(key, []) for key in keys]
+
+
 class ThumbnailByPostMediaIdSizeAndFormatLoader(BaseThumbnailBySizeAndFormatLoader):
     context_key = "thumbnail_by_postmedia_size_and_format"
     model_name = "post_media"
+
+
+class ThumbnailByCategoryIdSizeAndFormatLoader(BaseThumbnailBySizeAndFormatLoader):
+    context_key = "thumbnail_by_category_size_and_format"
+    model_name = "category"

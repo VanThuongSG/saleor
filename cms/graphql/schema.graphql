@@ -63,6 +63,39 @@ type Query {
     kind: TranslatableKinds!
   ): TranslatableItem
 
+  """List of the shop's categories."""
+  categories(
+    """Filtering options for categories."""
+    filter: CategoryFilterInput
+
+    """Sort categories."""
+    sortBy: CategorySortingInput
+
+    """Filter categories by the nesting level in the category tree."""
+    level: Int
+
+    """Return the elements in the list that come before the specified cursor."""
+    before: String
+
+    """Return the elements in the list that come after the specified cursor."""
+    after: String
+
+    """Return the first n elements from the list."""
+    first: Int
+
+    """Return the last n elements from the list."""
+    last: Int
+  ): CategoryCountableConnection
+
+  """Look up a category by ID or slug."""
+  category(
+    """ID of the category."""
+    id: ID
+
+    """Slug of the category"""
+    slug: String
+  ): Category
+
   """Look up a post by ID or slug."""
   post(
     """ID of the post."""
@@ -603,6 +636,9 @@ enum WebhookEventTypeEnum {
 
   """An app status is changed."""
   APP_STATUS_CHANGED
+  CATEGORY_CREATED
+  CATEGORY_UPDATED
+  CATEGORY_DELETED
 
   """A new channel created."""
   CHANNEL_CREATED
@@ -738,6 +774,9 @@ enum WebhookEventTypeAsyncEnum {
 
   """An app status is changed."""
   APP_STATUS_CHANGED
+  CATEGORY_CREATED
+  CATEGORY_UPDATED
+  CATEGORY_DELETED
 
   """A new channel created."""
   CHANNEL_CREATED
@@ -1320,6 +1359,9 @@ enum WebhookSampleEventTypeEnum {
   APP_UPDATED
   APP_DELETED
   APP_STATUS_CHANGED
+  CATEGORY_CREATED
+  CATEGORY_UPDATED
+  CATEGORY_DELETED
   CHANNEL_CREATED
   CHANNEL_UPDATED
   CHANNEL_DELETED
@@ -2506,6 +2548,7 @@ type Post implements Node & ObjectWithMetadata {
   isPublished: Boolean!
   slug: String!
   postType: PostType!
+  category: Category
   created: DateTime!
 
   """
@@ -2616,6 +2659,175 @@ type PostType implements Node & ObjectWithMetadata {
   Requires one of the following permissions: MANAGE_POSTS.
   """
   hasPosts: Boolean
+}
+
+"""
+Represents a single category of posts. Categories allow to organize posts in a tree-hierarchies which can be used for navigation in the storefront.
+"""
+type Category implements Node & ObjectWithMetadata {
+  id: ID!
+
+  """List of private metadata items. Requires staff permissions to access."""
+  privateMetadata: [MetadataItem!]!
+
+  """
+  A single key from private metadata. Requires staff permissions to access.
+  
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  privateMetafield(key: String!): String
+
+  """
+  Private metadata. Requires staff permissions to access. Use `keys` to control which fields you want to include. The default is to include everything.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  privateMetafields(keys: [String!]): Metadata
+
+  """List of public metadata items. Can be accessed without permissions."""
+  metadata: [MetadataItem!]!
+
+  """
+  A single key from public metadata.
+  
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  metafield(key: String!): String
+
+  """
+  Public metadata. Use `keys` to control which fields you want to include. The default is to include everything.
+  
+  Added in Saleor 3.3.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  metafields(keys: [String!]): Metadata
+  seoTitle: String
+  seoDescription: String
+  name: String!
+
+  """
+  Description of the category.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+  slug: String!
+  parent: Category
+  level: Int!
+
+  """
+  Description of the category.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  descriptionJson: JSONString @deprecated(reason: "This field will be removed in Saleor 4.0. Use the `description` field instead.")
+
+  """List of ancestors of the category."""
+  ancestors(
+    """Return the elements in the list that come before the specified cursor."""
+    before: String
+
+    """Return the elements in the list that come after the specified cursor."""
+    after: String
+
+    """Return the first n elements from the list."""
+    first: Int
+
+    """Return the last n elements from the list."""
+    last: Int
+  ): CategoryCountableConnection
+
+  """
+  List of posts in the category. Requires the following permissions to include the unpublished items: MANAGE_POSTS.
+  """
+  posts(
+    """Return the elements in the list that come before the specified cursor."""
+    before: String
+
+    """Return the elements in the list that come after the specified cursor."""
+    after: String
+
+    """Return the first n elements from the list."""
+    first: Int
+
+    """Return the last n elements from the list."""
+    last: Int
+  ): PostCountableConnection
+
+  """List of children of the category."""
+  children(
+    """Return the elements in the list that come before the specified cursor."""
+    before: String
+
+    """Return the elements in the list that come after the specified cursor."""
+    after: String
+
+    """Return the first n elements from the list."""
+    first: Int
+
+    """Return the last n elements from the list."""
+    last: Int
+  ): CategoryCountableConnection
+  backgroundImage(
+    """
+    Size of the image. If not provided, the original image will be returned.
+    """
+    size: Int
+
+    """
+    The format of the image. When not provided, format of the original image will be used. Must be provided together with the size value, otherwise original image will be returned.
+    
+    Added in Saleor 3.6.
+    
+    Note: this API is currently in Feature Preview and can be subject to changes at later point.
+    """
+    format: ThumbnailFormatEnum
+  ): Image
+}
+
+type CategoryCountableConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+  edges: [CategoryCountableEdge!]!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type CategoryCountableEdge {
+  """The item at the end of the edge."""
+  node: Category!
+
+  """A cursor for use in pagination."""
+  cursor: String!
+}
+
+type PostCountableConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+  edges: [PostCountableEdge!]!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type PostCountableEdge {
+  """The item at the end of the edge."""
+  node: Post!
+
+  """A cursor for use in pagination."""
+  cursor: String!
 }
 
 """Represents an image."""
@@ -2820,21 +3032,37 @@ enum TranslatableKinds {
   POST
 }
 
-type PostCountableConnection {
-  """Pagination data for this connection."""
-  pageInfo: PageInfo!
-  edges: [PostCountableEdge!]!
-
-  """A total count of items in the collection."""
-  totalCount: Int
+input CategoryFilterInput {
+  search: String
+  metadata: [MetadataFilter!]
+  ids: [ID!]
 }
 
-type PostCountableEdge {
-  """The item at the end of the edge."""
-  node: Post!
+input MetadataFilter {
+  """Key of a metadata item."""
+  key: String!
 
-  """A cursor for use in pagination."""
-  cursor: String!
+  """Value of a metadata item."""
+  value: String
+}
+
+input CategorySortingInput {
+  """Specifies the direction in which to sort products."""
+  direction: OrderDirection!
+
+  """Sort categories by the selected field."""
+  field: CategorySortField!
+}
+
+enum CategorySortField {
+  """Sort categories by name."""
+  NAME
+
+  """Sort categories by post count."""
+  POST_COUNT
+
+  """Sort categories by subcategory count."""
+  SUBCATEGORY_COUNT
 }
 
 input PostSortingInput {
@@ -2874,18 +3102,13 @@ enum PostSortField {
 }
 
 input PostFilterInput {
+  isPublished: Boolean
+  categories: [ID!]
+  hasCategory: Boolean
   search: String
   metadata: [MetadataFilter!]
   postTypes: [ID!]
   ids: [ID!]
-}
-
-input MetadataFilter {
-  """Key of a metadata item."""
-  key: String!
-
-  """Value of a metadata item."""
-  value: String
 }
 
 type PostTypeCountableConnection {
@@ -3969,6 +4192,54 @@ type Mutation {
     """ID of the event delivery to retry."""
     id: ID!
   ): EventDeliveryRetry
+
+  """
+  Creates a new category. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  categoryCreate(
+    """Fields required to create a category."""
+    input: CategoryInput!
+
+    """
+    ID of the parent category. If empty, category will be top level category.
+    """
+    parent: ID
+  ): CategoryCreate
+
+  """
+  Deletes a category. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  categoryDelete(
+    """ID of a category to delete."""
+    id: ID!
+  ): CategoryDelete
+
+  """
+  Deletes categories. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  categoryBulkDelete(
+    """List of category IDs to delete."""
+    ids: [ID!]!
+  ): CategoryBulkDelete
+
+  """
+  Updates a category. 
+  
+  Requires one of the following permissions: MANAGE_POSTS.
+  """
+  categoryUpdate(
+    """ID of a category to update."""
+    id: ID!
+
+    """Fields required to update a category."""
+    input: CategoryInput!
+  ): CategoryUpdate
 
   """
   Creates a new post. 
@@ -5233,14 +5504,14 @@ type EventDeliveryRetry {
 }
 
 """
-Creates a new post. 
+Creates a new category. 
 
 Requires one of the following permissions: MANAGE_POSTS.
 """
-type PostCreate {
+type CategoryCreate {
   postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
   errors: [PostError!]!
-  post: Post
+  category: Category
 }
 
 type PostError {
@@ -5276,7 +5547,92 @@ enum PostErrorCode {
   NOT_POSTS_IMAGE
 }
 
+input CategoryInput {
+  """
+  Category description.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+
+  """Category name."""
+  name: String
+
+  """Category slug."""
+  slug: String
+
+  """Search engine optimization fields."""
+  seo: SeoInput
+
+  """Background image file."""
+  backgroundImage: Upload
+
+  """Alt text for a post media."""
+  backgroundImageAlt: String
+}
+
+input SeoInput {
+  """SEO title."""
+  title: String
+
+  """SEO description."""
+  description: String
+}
+
+"""
+Variables of this type must be set to null in mutations. They will be replaced with a filename from a following multipart part containing a binary file. See: https://github.com/jaydenseric/graphql-multipart-request-spec.
+"""
+scalar Upload
+
+"""
+Deletes a category. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type CategoryDelete {
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+  category: Category
+}
+
+"""
+Deletes categories. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type CategoryBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+}
+
+"""
+Updates a category. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type CategoryUpdate {
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+  category: Category
+}
+
+"""
+Creates a new post. 
+
+Requires one of the following permissions: MANAGE_POSTS.
+"""
+type PostCreate {
+  postErrors: [PostError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [PostError!]!
+  post: Post
+}
+
 input PostCreateInput {
+  """ID of the product's category."""
+  category: ID
+
   """Post internal name."""
   slug: String
 
@@ -5315,14 +5671,6 @@ input PostCreateInput {
 
   """ID of the post type that post belongs to."""
   postType: ID!
-}
-
-input SeoInput {
-  """SEO title."""
-  title: String
-
-  """SEO description."""
-  description: String
 }
 
 """
@@ -5372,6 +5720,9 @@ type PostUpdate {
 }
 
 input PostInput {
+  """ID of the product's category."""
+  category: ID
+
   """Post internal name."""
   slug: String
 
@@ -5479,11 +5830,6 @@ input PostMediaCreateInput {
   """Represents an URL to an external media."""
   mediaUrl: String
 }
-
-"""
-Variables of this type must be set to null in mutations. They will be replaced with a filename from a following multipart part containing a binary file. See: https://github.com/jaydenseric/graphql-multipart-request-spec.
-"""
-scalar Upload
 
 """
 Deletes a post media. 
@@ -7560,6 +7906,78 @@ type AppStatusChanged implements Event {
 
   """The application the event relates to."""
   app: App
+}
+
+"""
+Event sent when new category is created.
+
+Added in Saleor 3.2.
+
+Note: this API is currently in Feature Preview and can be subject to changes at later point.
+"""
+type CategoryCreated implements Event {
+  """Time of the event."""
+  issuedAt: DateTime
+
+  """Saleor version that triggered the event."""
+  version: String
+
+  """The user or application that triggered the event."""
+  issuingPrincipal: IssuingPrincipal
+
+  """The application receiving the webhook."""
+  recipient: App
+
+  """The category the event relates to."""
+  category: Category
+}
+
+"""
+Event sent when category is updated.
+
+Added in Saleor 3.2.
+
+Note: this API is currently in Feature Preview and can be subject to changes at later point.
+"""
+type CategoryUpdated implements Event {
+  """Time of the event."""
+  issuedAt: DateTime
+
+  """Saleor version that triggered the event."""
+  version: String
+
+  """The user or application that triggered the event."""
+  issuingPrincipal: IssuingPrincipal
+
+  """The application receiving the webhook."""
+  recipient: App
+
+  """The category the event relates to."""
+  category: Category
+}
+
+"""
+Event sent when category is deleted.
+
+Added in Saleor 3.2.
+
+Note: this API is currently in Feature Preview and can be subject to changes at later point.
+"""
+type CategoryDeleted implements Event {
+  """Time of the event."""
+  issuedAt: DateTime
+
+  """Saleor version that triggered the event."""
+  version: String
+
+  """The user or application that triggered the event."""
+  issuingPrincipal: IssuingPrincipal
+
+  """The application receiving the webhook."""
+  recipient: App
+
+  """The category the event relates to."""
+  category: Category
 }
 
 """

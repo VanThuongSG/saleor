@@ -15,8 +15,6 @@ pytest_plugins = [
     "cms.graphql.channel.tests.fixtures",
     "cms.graphql.channel.tests.benchmark.fixtures",
     "cms.graphql.account.tests.benchmark.fixtures",
-    "cms.graphql.order.tests.benchmark.fixtures",
-    "cms.graphql.giftcard.tests.benchmark.fixtures",
     "cms.graphql.webhook.tests.benchmark.fixtures",
     "cms.plugins.webhook.tests.subscription_webhooks.fixtures",
 ]
@@ -28,8 +26,6 @@ pytest_plugins_saleor = [
     "saleor.graphql.channel.tests.fixtures",
     "saleor.graphql.channel.tests.benchmark.fixtures",
     "saleor.graphql.account.tests.benchmark.fixtures",
-    "saleor.graphql.order.tests.benchmark.fixtures",
-    "saleor.graphql.giftcard.tests.benchmark.fixtures",
     "saleor.graphql.webhook.tests.benchmark.fixtures",
     "saleor.plugins.webhook.tests.subscription_webhooks.fixtures",
 ]

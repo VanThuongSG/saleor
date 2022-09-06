@@ -2,7 +2,11 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.db.models import (
     F,
+    TextField,
 )
+from mptt.managers import TreeManager
+from mptt.models import MPTTModel
+
 from ..core.db.fields import SanitizedJSONField
 from ..core.models import ModelWithMetadata, PublishableModel, PublishedQuerySet, SortableModel
 from ..core.permissions import PostPermissions, PostTypePermissions
@@ -10,6 +14,44 @@ from ..core.utils.editorjs import clean_editor_js
 from ..core.utils.translations import TranslationProxy
 from ..seo.models import SeoModel, SeoModelTranslation
 from . import PostMediaTypes
+
+
+ALL_POSTS_PERMISSIONS = [
+    # List of permissions, where each of them allows viewing all posts
+    # (including unpublished).
+    PostPermissions.MANAGE_POSTS,
+]
+
+class Category(ModelWithMetadata, MPTTModel, SeoModel):
+    name = models.CharField(max_length=250)
+    slug = models.SlugField(max_length=255, unique=True, allow_unicode=True)
+    description = SanitizedJSONField(blank=True, null=True, sanitizer=clean_editor_js)
+    description_plaintext = TextField(blank=True)
+    parent = models.ForeignKey(
+        "self", null=True, blank=True, related_name="children", on_delete=models.CASCADE
+    )
+    background_image = models.ImageField(
+        upload_to="category-backgrounds", blank=True, null=True
+    )
+    background_image_alt = models.CharField(max_length=128, blank=True)
+
+    objects = models.Manager()
+    tree = TreeManager()
+    translated = TranslationProxy()
+
+    class Meta:
+        indexes = [
+            *ModelWithMetadata.Meta.indexes,
+            GinIndex(
+                name="category_search_name_slug_gin",
+                # `opclasses` and `fields` should be the same length
+                fields=["name", "slug", "description_plaintext"],
+                opclasses=["gin_trgm_ops"] * 3,
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class PostQueryset(PublishedQuerySet):
@@ -20,8 +62,6 @@ class PostQueryset(PublishedQuerySet):
 
     def prefetched_for_webhook(self, single_object=True):
         common_fields = (
-            "attributes__values",
-            "attributes__assignment__attribute",
             "media",
         )
         if single_object:
@@ -36,6 +76,15 @@ class Post(ModelWithMetadata, SeoModel, PublishableModel):
         "PostType", related_name="posts", on_delete=models.CASCADE
     )
     content = SanitizedJSONField(blank=True, null=True, sanitizer=clean_editor_js)
+
+    category = models.ForeignKey(
+        Category,
+        related_name="posts",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     external_url = models.URLField(blank=True, null=True, max_length=2048)
 

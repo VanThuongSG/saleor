@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from ..core.middleware import Requestor
     from ..menu.models import Menu, MenuItem
     from ..page.models import Page, PageType
-    from ..post.models import Post, PostType
+    from ..post.models import Category, Post, PostType
     from .base_plugin import BasePlugin
 
 NotifyEventTypeChoice = str
@@ -303,6 +303,18 @@ class PluginsManager(ABC):
     def app_status_changed(self, app: "App"):
         default_value = None
         return self.__run_method_on_plugins("app_status_changed", default_value, app)
+
+    def category_created(self, category: "Category"):
+        default_value = None
+        return self.__run_method_on_plugins("category_created", default_value, category)
+
+    def category_updated(self, category: "Category"):
+        default_value = None
+        return self.__run_method_on_plugins("category_updated", default_value, category)
+
+    def category_deleted(self, category: "Category"):
+        default_value = None
+        return self.__run_method_on_plugins("category_deleted", default_value, category)
 
     def channel_created(self, channel: "Channel"):
         default_value = None

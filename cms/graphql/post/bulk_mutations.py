@@ -5,9 +5,29 @@ from django.db import transaction
 from ...core.permissions import PostPermissions, PostTypePermissions
 from ...core.tracing import traced_atomic_transaction
 from ...post import models
+from ...post.utils import delete_categories
 from ..core.mutations import BaseBulkMutation, ModelBulkDeleteMutation
 from ..core.types import NonNullList, PostError
-from .types import Post, PostType, PostMedia
+from .types import Category, Post, PostType, PostMedia
+
+
+class CategoryBulkDelete(ModelBulkDeleteMutation):
+    class Arguments:
+        ids = NonNullList(
+            graphene.ID, required=True, description="List of category IDs to delete."
+        )
+
+    class Meta:
+        description = "Deletes categories."
+        model = models.Category
+        object_type = Category
+        permissions = (PostPermissions.MANAGE_POSTS,)
+        error_type_class = PostError
+        error_type_field = "post_errors"
+
+    @classmethod
+    def bulk_action(cls, info, queryset):
+        delete_categories(queryset.values_list("pk", flat=True), info.context.plugins)
 
 
 class PostBulkDelete(ModelBulkDeleteMutation):

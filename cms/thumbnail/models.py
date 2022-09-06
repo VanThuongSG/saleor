@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from ..account.models import User
-from ..post.models import PostMedia
+from ..post.models import Category, PostMedia
 from . import THUMBNAIL_SIZES, ThumbnailFormat
 
 
@@ -19,7 +19,14 @@ class Thumbnail(models.Model):
     size = models.PositiveIntegerField(validators=[validate_thumbnail_size])
     format = models.CharField(
         max_length=32, null=True, blank=True, choices=ThumbnailFormat.CHOICES
-    )    
+    )
+    category = models.ForeignKey(
+        Category,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="thumbnails",
+    ) 
     post_media = models.ForeignKey(
         PostMedia,
         null=True,

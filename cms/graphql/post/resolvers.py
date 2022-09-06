@@ -5,6 +5,21 @@ from ..utils import get_user_or_app_from_context
 from .types import Post
 
 
+def resolve_category_by_id(id):
+    return models.Category.objects.filter(pk=id).first()
+
+
+def resolve_category_by_slug(slug):
+    return models.Category.objects.filter(slug=slug).first()
+
+
+def resolve_categories(_info, level=None):
+    qs = models.Category.objects.prefetch_related("children")
+    if level is not None:
+        qs = qs.filter(level=level)
+    return qs.distinct()
+
+
 def resolve_post(info, global_post_id=None, slug=None):
     validate_one_of_args_is_in_query("id", global_post_id, "slug", slug)
     requestor = get_user_or_app_from_context(info.context)

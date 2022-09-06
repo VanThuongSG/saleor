@@ -6,13 +6,19 @@ class PostAppConfig(AppConfig):
     name = "cms.post"
 
     def ready(self):
-        from .models import Post, PostMedia
+        from .models import Category, Post, PostMedia
         from .signals import (
+            delete_background_image,
             delete_post_all_media,
             delete_post_media_image,
         )
 
         # preventing duplicate signals
+        post_delete.connect(
+            delete_background_image,
+            sender=Category,
+            dispatch_uid="delete_category_background",
+        )
         post_delete.connect(
             delete_post_media_image,
             sender=PostMedia,

@@ -6,7 +6,7 @@ from graphql.error import GraphQLError
 
 from ..account.models import User
 from ..graphql.core.utils import from_global_id_or_error
-from ..post.models import PostMedia
+from ..post.models import Category, PostMedia
 from ..thumbnail.models import Thumbnail
 from . import ThumbnailFormat
 from .utils import ProcessedImage, get_thumbnail_size, prepare_thumbnail_file_name
@@ -15,6 +15,7 @@ ModelData = namedtuple("ModelData", ["model", "image_field", "thumbnail_field"])
 
 TYPE_TO_MODEL_DATA_MAPPING = {
     "User": ModelData(User, "avatar", "user"),
+    "Category": ModelData(Category, "background_image", "category"),
     "PostMedia": ModelData(PostMedia, "image", "post_media"),
 }
 
